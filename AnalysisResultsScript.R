@@ -3,6 +3,9 @@ library(ExperimentSubset)
 library(scater)
 library(scran)
 library(pryr)
+library(scRNAseq)
+
+sce <- AztekinTailData()
 
 #################################
 #     Use ExperimentSubset      #
@@ -17,8 +20,13 @@ perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
 colData(es) <- cbind(colData(es), perCellQCMetrics)
 
 #Filter cells with low column sum and create a new subset called ‘filteredCells’:
+## rank cells in order of highest sum
+# es <- es[, order(-es@colData$sum)]
 filteredCellsIndices <- which(colData(es)$sum > 1500)
+## keep top cells only 40% in a new subset
+# es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
 es <- createSubset(es, "filteredCells", cols = filteredCellsIndices, parentAssay = "counts")
+
 
 #Normalize ‘filteredCells’ subset using scater library and store it back:
 # assay(es, "filteredCells", subsetAssayName = "filteredCellsNormalized") <- normalizeCounts(assay(es, "filteredCells"))
@@ -38,8 +46,8 @@ colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000")
 #Show the current condition of the ExperimentSubset object:
 subsetSummary(es)
 
-#Single ES object size
-print(object_size(es), unit = "Mb")
+# #Single ES object size
+# print(object_size(es), unit = "Mb")
 
 
 #####################################
@@ -56,7 +64,9 @@ colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
 
 #Filter cells with low column sum and create a new object:
 filteredCellsIndices <- which(colData(sce1)$sum > 1500)
+# sce1 <- sce1[, order(-sce1@colData$sum)]
 sce2 <- sce1[,filteredCellsIndices]
+# sce2 <- sce1[,1:round(ncol(es) * 0.40)]
 
 #Normalize sce2 using scater library and store it back:
 assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
@@ -74,7 +84,11 @@ colData(sce3) <- cbind(colData(sce3), clusterPC)
 
 #Three SCE object sizes
 totalSize <- object_size(sce1) + object_size(sce2) + object_size(sce3) 
+
+print("Original SCE Total Size:")
 print(totalSize, unit = "Mb")
-print(object_size(sce1), unit = "Mb")
-print(object_size(sce2), unit = "Mb")
-print(object_size(sce3), unit = "Mb")
+
+print("ES Total Size:")
+#Single ES object size
+print(object_size(es), unit = "Mb")
+
