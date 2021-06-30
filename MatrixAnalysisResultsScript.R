@@ -1,12 +1,4 @@
-#Load libraries (must be installed before loading)
-library(ExperimentSubset)
-library(scater)
-library(scran)
-library(pryr)
-library(scRNAseq)
-library(coop)
-
-sce <- BaronPancreasData('mouse')
+assay(sce, "counts") <- as.matrix(assay(sce, "counts"))
 
 #################################
 #     Use ExperimentSubset      #
