@@ -5,8 +5,27 @@ library(scran)
 library(pryr)
 library(scRNAseq)
 library(coop)
+library(Matrix)
 
-sce <- BaronPancreasData('mouse')
+#sce <- BaronPancreasData('mouse')
+set.seed(20)
+
+rows <- 26774
+cols <- 21086
+# sce <- SingleCellExperiment::SingleCellExperiment(
+#   list(counts = matrix(data = rpois(rows*cols, 9), nrow = rows, ncol = cols)), 
+#   colData = data.frame(colVariable1 = seq(1:cols)), 
+#   rowData = data.frame(rowVariable1 = seq(1:rows)))
+sce <- SingleCellExperiment::SingleCellExperiment(
+  list(counts = Matrix(data = rpois(rows*cols, 9), nrow = rows, ncol = cols, sparse = TRUE)), 
+  colData = data.frame(colVariable1 = seq(1:cols)), 
+  rowData = data.frame(rowVariable1 = seq(1:rows)))
+rownames(sce) <- rep(paste0("r", seq(rows)))
+colnames(sce) <- rep(paste0("c", seq(cols)))
+
+print(sum(assay(sce, "counts"))/ncol(sce))
+#print(sparsity(assay(sce, "counts")))
+
 
 #################################
 #     Use ExperimentSubset      #
