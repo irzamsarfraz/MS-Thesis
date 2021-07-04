@@ -9,9 +9,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Irzam Sarfraz" />
+<meta name="author" content="Irzam Sarfraz, Muhammad Asif, Joshua D. Campbell" />
 
-<meta name="date" content="2021-05-16" />
+<meta name="date" content="2021-07-05" />
 
 <title>Development of a data-container to efficiently manage subsets of scRNA-Seq data</title>
 
@@ -279,9 +279,9 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Development of a data-container to efficiently manage subsets of scRNA-Seq data</h1>
-<h3 class="subtitle">v1: Basic pre-processing and heatmaps</h3>
-<h4 class="author">Irzam Sarfraz</h4>
-<h4 class="date">May 16, 2021</h4>
+<h3 class="subtitle">ExperimentSubset</h3>
+<h4 class="author">Irzam Sarfraz, Muhammad Asif, Joshua D. Campbell</h4>
+<h4 class="date">July 05, 2021</h4>
 
 </div>
 
@@ -524,9 +524,109 @@ div.tocify {
 </div>
 <div id="results-discussion" class="section level1" number="4">
 <h1 number="4"><span class="header-section-number">4</span> Results &amp; Discussion</h1>
+<p>Based on the implementation above, we created the R package “ExperimentSubset” and tested the package on a sample workflow using a number of datasets described below:</p>
+<ol style="list-style-type: decimal">
+<li>pbmc datasets</li>
+<li>real datasets</li>
+<li>simulated datasets</li>
+</ol>
+<p>As the overall purpose of the package is to save memory and provide provenance tracking in an analysis when subsets are created, we run a sample workflow from OSCA. The sample workflow is given below:</p>
+<ol style="list-style-type: decimal">
+<li>steps here</li>
+</ol>
+<pre class="r"><code>#Load PBMC4K dataset
+# sce1 &lt;- TENxPBMCData(dataset = &quot;pbmc4k&quot;)
+sce1 &lt;- sce
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics &lt;- perCellQCMetrics(assay(sce1, &quot;counts&quot;))
+colData(sce1) &lt;- cbind(colData(sce1), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new object:
+filteredCellsIndices &lt;- which(colData(sce1)$sum &gt; 1500)
+# sce1 &lt;- sce1[, order(-sce1@colData$sum)]
+sce2 &lt;- sce1[,filteredCellsIndices]
+# sce2 &lt;- sce1[,1:round(ncol(es) * 0.40)]
+
+#Normalize sce2 using scater library and store it back:
+assay(sce2, &quot;filteredCellsNormalized&quot;) &lt;- normalizeCounts(assay(sce2, &quot;counts&quot;))
+
+#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
+topHVG1000 &lt;- getTopHVGs(modelGeneVar(assay(sce2, &quot;filteredCellsNormalized&quot;)), n = 1000)
+sce3 &lt;- sce2[topHVG1000,]
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
+reducedDim(sce3, type = &quot;PCA&quot;) &lt;- calculatePCA(assay(sce3, &quot;filteredCellsNormalized&quot;))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData
+clusterPC = kmeans(reducedDim(sce3, &quot;PCA&quot;), 5)$cluster
+colData(sce3) &lt;- cbind(colData(sce3), clusterPC)
+
+#Three SCE object sizes
+totalSize &lt;- object_size(sce1) + object_size(sce2) + object_size(sce3) 
+
+
+print(&quot;Dimensions&quot;)
+print(dim(sce))
+
+print(&quot;Original SCE Total Size:&quot;)
+print(totalSize, unit = &quot;Mb&quot;)
+
+print(&quot;ES Total Size:&quot;)
+#Single ES object size
+print(object_size(es), unit = &quot;Mb&quot;)</code></pre>
+<p>The sample analysis described above creates multiple subsets and as can be seen that 3 SCE objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using ES:</p>
+<pre class="r"><code>#################################
+#     Use ExperimentSubset      #
+#################################
+
+#Load PBMC4K dataset and create ExperimentSubset object:
+# sce &lt;- TENxPBMCData(dataset = &quot;pbmc4k&quot;)
+es &lt;- ExperimentSubset(sce)
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics &lt;- perCellQCMetrics(assay(es, &quot;counts&quot;))
+colData(es) &lt;- cbind(colData(es), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new subset called ‘filteredCells’:
+## rank cells in order of highest sum
+es &lt;- es[, order(-es@colData$sum)]
+#filteredCellsIndices &lt;- which(colData(es)$sum &gt; 1500)
+## keep top cells only 40% in a new subset
+es &lt;- createSubset(es, &quot;filteredCells&quot;, cols = 1:round(ncol(es) * 0.40), parentAssay = &quot;counts&quot;)
+#es &lt;- createSubset(es, &quot;filteredCells&quot;, cols = filteredCellsIndices, parentAssay = &quot;counts&quot;)
+
+
+#Normalize ‘filteredCells’ subset using scater library and store it back:
+# assay(es, &quot;filteredCells&quot;, subsetAssayName = &quot;filteredCellsNormalized&quot;) &lt;- normalizeCounts(assay(es, &quot;filteredCells&quot;))
+es &lt;- ExperimentSubset::setSubsetAssay(es, &quot;filteredCells&quot;, normalizeCounts(assay(es, &quot;filteredCells&quot;)), subsetAssayName = &quot;filteredCellsNormalized&quot;)
+
+#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
+topHVG1000 &lt;- getTopHVGs(modelGeneVar(assay(es, &quot;filteredCellsNormalized&quot;)), n = 1000)
+es &lt;- createSubset(es, &quot;hvg1000&quot;, rows = topHVG1000, parentAssay = &quot;filteredCellsNormalized&quot;)
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
+reducedDim(es, type = &quot;PCA&quot;, subsetName = &quot;hvg1000&quot;) &lt;- calculatePCA(assay(es, &quot;hvg1000&quot;))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData of subset
+clusterPC = kmeans(reducedDim(es, &quot;PCA&quot;, subsetName = &quot;hvg1000&quot;), 5)$cluster
+colData(es, subsetName = &quot;hvg1000&quot;) &lt;- cbind(colData(es, subsetName = &quot;hvg1000&quot;), clusterPC)
+
+#Show the current condition of the ExperimentSubset object:
+subsetSummary(es)
+
+# #Single ES object size
+# print(object_size(es), unit = &quot;Mb&quot;)</code></pre>
+<p>As can be seen from the code above, only a single ES object is used.</p>
+<p>To further demonstrate the effectiveness of our package, we use multiple datasets and re-run the analyses and compute the memory savings with our package. Figure below illustrates the savings managed through our package in comparison with SCE:</p>
+<ul>
+<li>describe all strategies</li>
+</ul>
+<p>We also show provenance tracking:</p>
 </div>
 <div id="conclusion-limitations-future-work" class="section level1" number="5">
 <h1 number="5"><span class="header-section-number">5</span> Conclusion, limitations, &amp; future work</h1>
+<p>Analysis should have subsets and depends on sparsity and counts per cell diff in 0 and nonzero sizes is due to 0 occupying more memory</p>
 </div>
 
 
@@ -566,7 +666,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeCodeFolding("hide" === "show");
+  window.initializeCodeFolding("show" === "show");
 });
 </script>
 
