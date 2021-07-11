@@ -267,15 +267,17 @@ explain above
 | 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 9k cells |
 
 ## Sample Analysis Workflow
-As the overall purpose of the package is to save memory and provide provenance tracking in an analysis when subsets are created, we run a sample workflow from OSCA. The sample workflow is given below:
+As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accomodated in multiple guides and official tutorials. The step-by-step workflow is described below:
 
-- load data
-- compute qc metrics
-- use colsums as qc metric to filter the cells and keep the top 40% of the cells that have the highest colsums
-- normalize data
-- get top 1000 variable features
-- compute pca on variable features
-- perform clustering on the pca dimensions of variable features
+- Load scRNA-Seq data for analysis (this generally includes raw data such as counts matrices) into the data-structure. 
+- Quality Control metrics are computed for this data and stored into the colData slot of the object.
+- Colsums (sums of read counts for each cell) computed in the previous step are used to filter the data (only the top 40% of the cells are kept for downstream analysis to make sure that the number of cells selected in this step are uniform throughout different datasets).
+- The raw data is normalized and the normalized matrix is stored alongside the raw counts matrix.
+- Statistics for the variable features are computed and the data is once again filtered to keep only the top 1000 most variable features.
+- Dimensionality reduction (PCA) is performed on these top variable genes using the normalized assay and the computed results are stored back into the object. 
+- Kmeans clustering is performed on the dimensionality reduction results computed on the top 1000 variable genes and the cluster labels are stored back into the object.
+
+An R script that can be used to compute the analysis above with a SingleCellExperiment object is given below:
 
 ```{r, eval = FALSE}
 #Load PBMC4K dataset
@@ -321,7 +323,7 @@ print("ES Total Size:")
 print(object_size(es), unit = "Mb")
 ```
 
-The sample analysis described above creates multiple subsets and as can be seen that 3 SCE objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using ES:
+The sample analysis described above creates multiple subsets and as can be seen that 3 SingleCellExperiments objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using ExperimentSubset below:
 
 ```{r, eval = FALSE}
 #################################
@@ -367,32 +369,86 @@ subsetSummary(es)
 # print(object_size(es), unit = "Mb")
 ```
 
-As can be seen from the code above, only a single ES object is used. 
+As explicitly evident from the R scripts above, to run the workflow we use a single ExperimentSubset object in contrast to 3 SingleCellExperiment objects for the same analysis. 
 
-To further demonstrate the effectiveness of our package, we use multiple datasets and re-run the analyses and compute the memory savings with our package. Figure below illustrates the savings managed through our package in comparison with SCE:
+## Memory Savings
+
+To further demonstrate the effectiveness of our package, we run the same scripts with datasets described in the Selected Datasets section and tabulate the results according to each of the approach described below.
 
 - describe all strategies
 To compare the results, we utilize 2 approaches overall and multiple datasets:
 For both 2 approaches, we use 7 real datasets, 5 sample datasets and 7 simulated datasets.
 
-Approach 1: Use dgCMatrix
+### Approach 1: dgCMatrix
 dgCMatrix is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively able to compress the zero cells of the matrix. 
 
 1. Real datasets with extensive sparsity
 2. Simulated datasets with near to zero sparsity
 3. Sample datasets with extensive sparsity
 
-Approach 2: Use Matrix
+|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|SCE Total Memory|ES Total Memory|Savings|
+|----------|-------|----------|----------------|--------|---|--|-------|----------------|---------------|-------|
+|1|AztekinTailData|31535 13199|13434.67|0.9296133|1.28 GB|650 MB|49.22|0|0|0|
+|2|BachMammaryData|27998 25806|8239.648|0.9152684|2.23 GB|1.16 GB|47.98|0|0|0|
+|3|BaronPancreasData('human')|20125  8569|5828.225|0.9062241|718 MB|364 MB|49.3|0|0|0|
+|4|BaronPancreasData('mouse')|14878  1886|4990.086|0.8897182|137 MB|73.5 MB|46.35|0|0|0|
+|5|KotliarovPBMCData|32738 58654|	2065.245|	0.9780209|	1.92 GB|	1.04 GB|	45.83|	0|	0|	0|
+|6|BuettnerESCData|38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|	0|	0|	0|
+|7|CampbellBrainData|26774 21086|	4024.644|	0.9279162|	1.71 GB	|992 MB|	41.99|	0|	0|	0|
+|8|Sample sparse dataset  (1)|31535 13199|	283814.4|	0.000123194|	17 GB|	8.33 GB|	51|	0|	0|	0|
+|9|Sample sparse dataset  (2)|27998 25806|	251977.7|	0.000123218|	29.5 GB|	14.5 GB|	50.85|	0|	0|	0|
+|10|Sample sparse dataset  (3)|20125  8569|	181130.1|	0.000123687|	7.11 GB|	3.45 GB|	51.48|	0|	0|	0|
+|11|Sample sparse dataset  (4)|14878  1886|	133908.9|	0.000124662|	1.17 GB|	563 MB|	51.88|	0|	0|	0|
+|12|Sample sparse dataset  (5)|32738 58654|	294641.4|	0.000123562|	78.3 GB|	38.4 GB|	50.96|	0|	0|	0|
+|13|Sample sparse dataset  (6)|38293   288|	344673.6|	0.000125404|	454 MB|	224 MB|	50.66|	0|	0|	0|
+|14|Sample sparse dataset  (7)|26774 21086|	240964.1|	0.000123049|	23.1 GB|	11.3 GB|	51.08|	0|	0|	0|
+|15|pbmc3k|32738  2700|2366.9|	0.9741281|	16.3 MB|	7.16 MB|	56.07|	7743.2 MB|	4485.3 MB| 0 |	
+|16|pbmc4k|33694  4340|4349.038|	0.9608314|	19.1 MB|	8.08 MB|	57.7|	0	|0|	0|
+|17|pbmc6k|32738  5419|2027.635|	0.9771501|	18.5 MB|	8.37 MB|	54.76|	0|	0|	0|
+|18|pbmc8k|33694  8381|4639.048|	0.9582552|	24 MB|	9.93 MB|	58.63|	0	|0|	0|
+|19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97|	83494 MB|	54734.7 MB|	34.44|
+
+### Approach 2: Matrix
 
 1. Real datasets with extensive sparsity
 2. Simulated datasets with near to zero sparsity
 3. Sample datasets with extensive sparsity
 
+|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|SCE Total Memory|ES Total Memory|Savings|
+|----------|-------|----------|----------------|--------|---|--|-------|----------------|---------------|-------|
+|1|	AztekinTailData|	31535 13199|	13434.67|	0.9296133|	10.2 GB|	4.67 GB|	54.22|	0|	0|	0|
+|2|	BachMammaryData| 27998 25806|	8239.648|	0.9152684|	17.8 GB|	8.11 GB|	54.44|	0|	0|	0|
+|3|	BaronPancreasData('human')|	20125  8569|	5828.225|	0.9062241|	4.28 GB|	1.94 GB|	54.67|	0|	0|	0|
+|4|	BaronPancreasData('mouse')|	14878  1886|	4990.086|	0.8897182|	681 MB|	317 MB|	53.45|	0|	0|	0|
+|5|	KotliarovPBMCData|	32738 58654|	2065.245|	0.9780209|	39 GB|	21.6 GB|	44.62|	0|	0|	0|
+|6|	BuettnerESCData|	38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|	0|	0|	0|
+|7|	CampbellBrainData|	26774 21086|	4024.644|	0.9279162|	12.6 GB|	6.33 GB|	49.76|	0|	0|	0|
+|8|	Sample sparse dataset  (1)|	31535 13199|	283814.4|	0.000123194|	6.83 GB|	3 GB|	56.08|	0|	0|	0|
+|9|	Sample sparse dataset  (2)|	27998 25806|	251977.7|	0.000123218|	11.9 GB|	5.21 GB|	56.22|	0|	0|	0|
+|10|	Sample sparse dataset  (3)|	20125  8569|	181130.1|	0.000123687|	2.87 GB|	1.25 GB|	56.45|	0|	0|	0|
+|11|	Sample sparse dataset  (4)|	14878  1886|	133908.9|	0.000124662|	475 MB|	204 MB	|57.05|	0|	0|	0|
+|12|	Sample sparse dataset  (5)|	32738 58654|	294641.4|	0.000123562|	31.5 GB|	13.8 GB|	56.19|	0|	0|	0|
+|13|	Sample sparse dataset  (6)|	38293   288|	344673.6|	0.000125404|	186 MB|	83.1 MB|	55.32|	0|	0|	0|
+|14|	Sample sparse dataset  (7)|	26774 21086|	240964.1|	0.000123049|	9.3 GB|	4.07 GB|	56.24|	0|	0|	0|
+|15|	pbmc3k|	32738  2700|	2366.9|	0.9741281|	1.29 GB|	644 MB|	50.08|	2700.4 MB|	2148.1 MB|	0|
+|16|	pbmc4k|	33694  4340|	4349.038|	0.9608314|	2.39 GB|	1.06 GB|	55.65|	0|	0|	0|
+|17|	pbmc6k|	32738  5419|	2027.635|	0.9771501|	2.31 GB|	1.29 GB|	44.16|	0|	0|	0|
+|18|	pbmc8k|	33694  8381|	4639.048|	0.9582552|	4.63 GB|	2.04 GB|	55.94|	0|	0|	0|
+|19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	14.2 GB|	7.83 GB|	44.86|	0|	0|	0|
+
+
 In both approach 1 and 2, we compare the size of the resultant objects as well as the memory consumed during the example workflow.
 
-- sce will need to create 3 objects
+![alt text here](results.png)
 
-We also show provenance tracking:
+## Provenance Tracking
+One of the issues in typical scRNA-Seq workflows is the tracking of data between different forms, shapes, sizes and structures when it undergoes manipulation in different processes in an analysis workflow. In the sample analysis workflow described above, the original input data undergoes manipulation through different methods and to ensure that data in different forms are related/connected to each other, we implemented a mechanism within our package for this purpose in all of our structural functions. For users, we offer the use of `subsetSummary` function to display the current form and structure of the data at any given point in an analysis workflow. 
+
+```{r, message=FALSE, warning=FALSE}
+library(ExperimentSubset)
+es <- readRDS("es.rds")
+subsetSummary(es)
+```
 
 
 # Conclusion, limitations, & future work
