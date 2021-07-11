@@ -3,16 +3,7 @@ title: Development of a data-container to efficiently manage subsets of scRNA-Se
   data
 author: "Irzam Sarfraz, Muhammad Asif, Joshua D. Campbell"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
-output:
-  html_document:
-    toc: yes
-    toc_float: yes
-    number_sections: yes
-    theme: cosmo
-    code_folding: show
-    self_contained: true
-  pdf_document:
-    toc: yes
+output: word_document
 subtitle: "ExperimentSubset"
 editor_options:
   chunk_output_type: console
@@ -472,6 +463,3 @@ diff in 0 and nonzero sizes is due to 0 occupying more memory
 
 ## Future Work
 - works with available 5 classes and all general expression data, but need to generalize it for multiassaydata 
-
-# References {-}
-To add
