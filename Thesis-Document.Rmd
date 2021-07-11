@@ -235,15 +235,47 @@ To ensure the correctness of the our package throughout its development and post
 The ‘testthat’ package allows us to specify all unit tests within a single ‘testthat.R’ file with their corresponding inputs and the expected outputs.
 
 # Results & Discussion
-Based on the implementation above, we created the R package "ExperimentSubset" and tested the package on a sample workflow using a number of datasets described below:
+The ExperimentSubset R package was developed based on the implementation specified in the Methods section of this document above. To compare the memory savings offered by our package in contrast to other data structure packages such as the SingleCellExperiment, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow. .....
 
+## Selected Datasets
 1. pbmc datasets
 2. real datasets
 3. simulated datasets
+explain above
 
+
+|Serial No.| Dataset | Dimensions | Sparsity | Type |
+| -------- | ------- | ---------- | -------- | ---- |
+| 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real Dataset |
+| 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real Dataset |
+| 3 | BaronPancreasData('human') | 20125  8569 | 0.9062241 |Real Dataset |
+| 4 | BaronPancreasData('mouse') | 14878  1886 | 0.8897182 | Real Dataset |
+| 5 | KotliarovPBMCData | 32738 58654 | 0.9780209 | Real Dataset |
+| 6 | BuettnerESCData | 38293   288 | 0.7440639 | Real Dataset |
+| 7 | CampbellBrainData | 26774 21086 | 0.9279162 | Real Dataset |
+| 8 | Sample | 31535 13199 | 0.00012 |Sample filled with random values to remove sparseness |
+| 9 | Sample | 27998 25806 | 0.00012 | Sample filled with random values to remove sparseness |
+| 10 | Sample | 20125  8569 | 0.00012 | Sample filled with random values to remove sparseness |
+| 11 | Sample | 14878  1886 | 0.00012 | Sample filled with random values to remove sparseness |
+| 12 | Sample | 32738 58654 | 0.00012 | Sample filled with random values to remove sparseness |
+| 13 | Sample | 38293   288 | 0.00012 | Sample filled with random values to remove sparseness |
+| 14 | Sample | 26774 21086 | 0.00012 | Sample filled with random values to remove sparseness |
+| 15 | pbmc3k | 32738  2700 | 0.9741281 | Real dataset used for testing subset to 3k cells |
+| 16 | pbmc4k | 33694  4340 | 0.9608314 | Real dataset used for testing subset to 4k cells |
+| 17 | pbmc6k | 32738  5419 | 0.9771501 | Real dataset used for testing subset to 6k cells |
+| 18 | pbmc8k | 33694  8381 | 0.9582552 | Real dataset used for testing subset to 8k cells |
+| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 9k cells |
+
+## Sample Analysis Workflow
 As the overall purpose of the package is to save memory and provide provenance tracking in an analysis when subsets are created, we run a sample workflow from OSCA. The sample workflow is given below:
 
-1. steps here
+- load data
+- compute qc metrics
+- use colsums as qc metric to filter the cells and keep the top 40% of the cells that have the highest colsums
+- normalize data
+- get top 1000 variable features
+- compute pca on variable features
+- perform clustering on the pca dimensions of variable features
 
 ```{r, eval = FALSE}
 #Load PBMC4K dataset
@@ -340,6 +372,24 @@ As can be seen from the code above, only a single ES object is used.
 To further demonstrate the effectiveness of our package, we use multiple datasets and re-run the analyses and compute the memory savings with our package. Figure below illustrates the savings managed through our package in comparison with SCE:
 
 - describe all strategies
+To compare the results, we utilize 2 approaches overall and multiple datasets:
+For both 2 approaches, we use 7 real datasets, 5 sample datasets and 7 simulated datasets.
+
+Approach 1: Use dgCMatrix
+dgCMatrix is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively able to compress the zero cells of the matrix. 
+
+1. Real datasets with extensive sparsity
+2. Simulated datasets with near to zero sparsity
+3. Sample datasets with extensive sparsity
+
+Approach 2: Use Matrix
+
+1. Real datasets with extensive sparsity
+2. Simulated datasets with near to zero sparsity
+3. Sample datasets with extensive sparsity
+
+In both approach 1 and 2, we compare the size of the resultant objects as well as the memory consumed during the example workflow.
+
 - sce will need to create 3 objects
 
 We also show provenance tracking:

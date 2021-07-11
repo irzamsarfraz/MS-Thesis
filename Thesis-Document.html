@@ -11,7 +11,7 @@
 
 <meta name="author" content="Irzam Sarfraz, Muhammad Asif, Joshua D. Campbell" />
 
-<meta name="date" content="2021-07-05" />
+<meta name="date" content="2021-07-11" />
 
 <title>Development of a data-container to efficiently manage subsets of scRNA-Seq data</title>
 
@@ -281,7 +281,7 @@ div.tocify {
 <h1 class="title toc-ignore">Development of a data-container to efficiently manage subsets of scRNA-Seq data</h1>
 <h3 class="subtitle">ExperimentSubset</h3>
 <h4 class="author">Irzam Sarfraz, Muhammad Asif, Joshua D. Campbell</h4>
-<h4 class="date">July 05, 2021</h4>
+<h4 class="date">July 11, 2021</h4>
 
 </div>
 
@@ -524,16 +524,177 @@ div.tocify {
 </div>
 <div id="results-discussion" class="section level1" number="4">
 <h1 number="4"><span class="header-section-number">4</span> Results &amp; Discussion</h1>
-<p>Based on the implementation above, we created the R package “ExperimentSubset” and tested the package on a sample workflow using a number of datasets described below:</p>
+<p>The ExperimentSubset R package was developed based on the implementation specified in the Methods section of this document above. To compare the memory savings offered by our package in contrast to other data structure packages such as the SingleCellExperiment, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow. …..</p>
+<div id="selected-datasets" class="section level2" number="4.1">
+<h2 number="4.1"><span class="header-section-number">4.1</span> Selected Datasets</h2>
+<table>
+<colgroup>
+<col width="21%" />
+<col width="18%" />
+<col width="27%" />
+<col width="21%" />
+<col width="10%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Serial No.</th>
+<th>Dataset</th>
+<th>Dimensions</th>
+<th>Sparsity</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>AztekinTailData</td>
+<td>31535 13199</td>
+<td>0.9296133</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>BachMammaryData</td>
+<td>27998 25806</td>
+<td>0.9152684</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>BaronPancreasData(‘human’)</td>
+<td>20125 8569</td>
+<td>0.9062241</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>BaronPancreasData(‘mouse’)</td>
+<td>14878 1886</td>
+<td>0.8897182</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>KotliarovPBMCData</td>
+<td>32738 58654</td>
+<td>0.9780209</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>BuettnerESCData</td>
+<td>38293 288</td>
+<td>0.7440639</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>CampbellBrainData</td>
+<td>26774 21086</td>
+<td>0.9279162</td>
+<td>Real Dataset</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Sample</td>
+<td>31535 13199</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>Sample</td>
+<td>27998 25806</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>Sample</td>
+<td>20125 8569</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>Sample</td>
+<td>14878 1886</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>Sample</td>
+<td>32738 58654</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>Sample</td>
+<td>38293 288</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>Sample</td>
+<td>26774 21086</td>
+<td>0.00012</td>
+<td>Sample filled with random values to remove sparseness</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td>pbmc3k</td>
+<td>32738 2700</td>
+<td>0.9741281</td>
+<td>Real dataset used for testing subset to 3k cells</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td>pbmc4k</td>
+<td>33694 4340</td>
+<td>0.9608314</td>
+<td>Real dataset used for testing subset to 4k cells</td>
+</tr>
+<tr class="odd">
+<td>17</td>
+<td>pbmc6k</td>
+<td>32738 5419</td>
+<td>0.9771501</td>
+<td>Real dataset used for testing subset to 6k cells</td>
+</tr>
+<tr class="even">
+<td>18</td>
+<td>pbmc8k</td>
+<td>33694 8381</td>
+<td>0.9582552</td>
+<td>Real dataset used for testing subset to 8k cells</td>
+</tr>
+<tr class="odd">
+<td>19</td>
+<td>pbmc33k</td>
+<td>32738 33148</td>
+<td>0.9766104</td>
+<td>Real dataset used for testing subset to 9k cells</td>
+</tr>
+</tbody>
+</table>
 <ol style="list-style-type: decimal">
 <li>pbmc datasets</li>
 <li>real datasets</li>
 <li>simulated datasets</li>
 </ol>
 <p>As the overall purpose of the package is to save memory and provide provenance tracking in an analysis when subsets are created, we run a sample workflow from OSCA. The sample workflow is given below:</p>
-<ol style="list-style-type: decimal">
-<li>steps here</li>
-</ol>
+<ul>
+<li>load data</li>
+<li>compute qc metrics</li>
+<li>use colsums as qc metric to filter the cells and keep the top 40% of the cells that have the highest colsums</li>
+<li>normalize data</li>
+<li>get top 1000 variable features</li>
+<li>compute pca on variable features</li>
+<li>perform clustering on the pca dimensions of variable features</li>
+</ul>
 <pre class="r"><code>#Load PBMC4K dataset
 # sce1 &lt;- TENxPBMCData(dataset = &quot;pbmc4k&quot;)
 sce1 &lt;- sce
@@ -620,9 +781,26 @@ subsetSummary(es)
 <p>As can be seen from the code above, only a single ES object is used.</p>
 <p>To further demonstrate the effectiveness of our package, we use multiple datasets and re-run the analyses and compute the memory savings with our package. Figure below illustrates the savings managed through our package in comparison with SCE:</p>
 <ul>
-<li>describe all strategies</li>
+<li>describe all strategies To compare the results, we utilize 2 approaches overall and multiple datasets: For both 2 approaches, we use 7 real datasets, 5 sample datasets and 7 simulated datasets.</li>
+</ul>
+<p>Approach 1: Use dgCMatrix dgCMatrix is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively able to compress the zero cells of the matrix.</p>
+<ol style="list-style-type: decimal">
+<li>Real datasets with extensive sparsity</li>
+<li>Simulated datasets with near to zero sparsity</li>
+<li>Sample datasets with extensive sparsity</li>
+</ol>
+<p>Approach 2: Use Matrix</p>
+<ol style="list-style-type: decimal">
+<li>Real datasets with extensive sparsity</li>
+<li>Simulated datasets with near to zero sparsity</li>
+<li>Sample datasets with extensive sparsity</li>
+</ol>
+<p>In both approach 1 and 2, we compare the size of the resultant objects as well as the memory consumed during the example workflow.</p>
+<ul>
+<li>sce will need to create 3 objects</li>
 </ul>
 <p>We also show provenance tracking:</p>
+</div>
 </div>
 <div id="conclusion-limitations-future-work" class="section level1" number="5">
 <h1 number="5"><span class="header-section-number">5</span> Conclusion, limitations, &amp; future work</h1>
