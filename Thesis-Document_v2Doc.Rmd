@@ -23,7 +23,7 @@ Genomic sequence extraction technologies have improved drastically since the beg
 These computational analyses that lead to useful biological insights are often quite complex, use large amounts of data and consume vast computational resources. It is therefore, utmost important, to tackle these analyses by developing methods, tools and data structures that can conserve one or more of these resources. Additionally, because most of these analyses are quite complex, lengthy and require the use of supplementary data (in addition to the primary genomics data), it becomes quite tricky to keep track of the different shapes of the data that have emerged over the analysis pipeline. Therefore, in this study, we focus on developing a data-structure that efficiently manages subsets of high-throughput genomic sequence data by eliminating the need to redundantly store additional data which is a common occurrence in many of the computational analyses of biological high-throughput data and somehow deliver features for provenance tracking for easier tracking different shapes of the data throughout an analysis workflow.
 
 ## Basic concepts and terminologies
-As the proposed study/project has applications in Bioinformatics, a brief introduction and explanation of the key concepts and terminologies is required. Some of these are given below.
+As the proposed study/project has applications in Bioinformatics, a brief introduction and explanation of the key concepts and terminologies is required. Some of these concepts and terminologies are described below:
 
 ### High-throughput genomic data
 High-throughput genomic technologies such as microarrays and sequencing allow rapid generation of vast amounts of data from both DNA and RNA of an origanism that is both large in size and high-dimensional. These high-throughput genome extraction technologies are widely used to profile the genome of an organism, to better understand the genetic structure of an organism or even to identify and address the causes of certain diseases and defects. In contrast, the traditional PCR-based approaches are more concerned with amplification and detection of a few transcripts of interest as compared to hundreds of thousands in high-throughput approaches. Most of the times, the output of high-throughput sequeuncing experiments are counts matrices where each column of the matrix represents a particular sample and the row represents the quantified presence of a particular gene or transcript in that sample. These matrices form the basis of a large amounts of statistical analyses that can be performed to gain insight about the underlying biology of the samples.
@@ -32,7 +32,7 @@ High-throughput genomic technologies such as microarrays and sequencing allow ra
 An assay (or a data assay) is the actual form of the data that can be used with a particular statistical analysis method. Initially, this assay is the counts matrix which is output from a sequencing experiment but can undergo several transformations throughout its lifetime during an analysis workflow. For example, the initial assays (counts matrix) can undergo normalization, log-transformation, scaling, trimming among others and are stored as separate assays which be called and used during the analysis workflow as per requirements of the workflow and the method being used. However, it must be understood that these multiple assays belong to the same experiment but only represent the multiple transformations that have been performed on the original assay so as to have original assay in all forms. The assays always have dimensions of m*n where m is the number of genes (rows) and n is the number of samples (columns).
 
 ### colData
-The ‘colData’ is short for column data and is always the metadata associated with the samples (columns) of the dataset (columns of an assay). The ‘colData’ has dimensions n*q where n is the number of samples and q >= 0 based on the number of metadata columns (for samples) available for a particular dataset. The ‘colData’ is often referred to as the phenotype data as it is associated with the phenotypic characteristics (patient data) of the dataset. For example, the ‘colData’ may have the disease condition of each sample in the dataset (tumor or normal) or age of the patient that the sample belongs to. This ‘colData’ may be used in many downstream analysis methods or visualizations for labeling of samples or even in statistical methods to separate the samples based on a phenotype, e.g., a linear model may be used between normal and tumor tissues (referenced from colData) to identify significant genes based on the quantified assay data.
+The `colData` is short for column data and is always the metadata associated with the samples (columns) of the dataset (columns of an assay). The ‘colData’ has dimensions n*q where n is the number of samples and q >= 0 based on the number of metadata columns (for samples) available for a particular dataset. The ‘colData’ is often referred to as the phenotype data as it is associated with the phenotypic characteristics (patient data) of the dataset. For example, the ‘colData’ may have the disease condition of each sample in the dataset (tumor or normal) or age of the patient that the sample belongs to. This ‘colData’ may be used in many downstream analysis methods or visualizations for labeling of samples or even in statistical methods to separate the samples based on a phenotype, e.g., a linear model may be used between normal and tumor tissues (referenced from colData) to identify significant genes based on the quantified assay data.
 
 ### rowData
 The ‘rowData’ as obvious is the metadata associated with the genes (rows) of the dataset (rows of the an assay). The ‘rowData’ has dimensions m*q where m is the number of genes and q>=0 abased on the number of metadata columns (for genes) available for a particular dataset. The ‘rowData’ is often used to store the computed statistics for the genes in the dataset. For example, during the highly variable genes computation, the variance and the mean computed for each gene is stored in separate columns of the ‘rowData’ which may be used at a later stage to identify the most highly variable genes from these statistics. Additionally, ‘rowData’ may be used to store anything that may be related to the genes of the dataset, e.g., genes are often referenced by several different systems of naming conventions (ENSEMBLE, Entrez or Gene Symbols) which can be stored in the ‘rowData’.
@@ -68,7 +68,7 @@ The available data-structure classes for manipulation of high-throughput sequenc
 - Interface to the user must be same as offered by SingleCellExperiment and SummarizedExperiment classes to ensure easy replacement of existing code with the new package.
 - Ensure conservation of memory by eliminating the need to store redundant data values against all the data assays, rowData and colData, by using pointers to the existing data whenever and wherever possible.
 - Provenance tracking to ensure that the origin of the data can easily be tracked.
-- Apply this data container to commonly used analysis workflows and show how efficiently it manages subsets of data from within a single object while saving memory.
+- Apply this data container to commonly used analysis workflows and show how efficiently it manages subsets of data from within a single object while conserving memory.
 
 ## Research question
 How can we develop a data-structure that can efficiently manage subsets of high-throughput genomic data while preserving data provenance and ensuring no additional redundant data is stored?
@@ -126,12 +126,20 @@ The MultiAssayExperiment allows the storage of multiple datasets having differen
 # Research Methodology
 The overall research methodology for this study includes the package design (high-level logical design to support subsets in existing *Experiment packages), package implementation (development and deployment of package in R environment, including package documentation) and the validation of the efficiency of the package on different datasets (results). The research methodology can be perceived easily from the Figure.
 
+![alt text here](method_top.png)
+
 ## Package Design
 Keeping in view the objectives and scope of the package, an abstract logical design of the package utility is presented in the figure.
 
+![alt text here](design.png)
+
 In the figure above, an abstract design for the utlitiy of the package is presented. The goal of the package is to provide the ability to create subsets from available main data assays (counts, logCounts etc. from the figure) and link them in a hierarchical order. This linking of assays allows the creation of hierarchical subsets which are common during large and complex analysis workflows. Essentially, subsets can be created from either the main assays, or other subsets, where the the newly created subset can have a subset of rows or columns or a combination of both. 
 
+![alt text here](class_design.png)
+
 The figure above demonstrates the general class structure of the package. 
+
+![alt text here](class_diagram.png)
 
 The figure above represents the class diagram of the new proposed class to manage subsets of data. 
 
@@ -144,6 +152,9 @@ The R programming language supports multiple types of object-oriented class syst
 Keeping in view the above arguments, we use the S4 class system to implement our class by inheriting from other Experiment classes. 
 
 A brief diagram of implementing our package (and the class) is presented in the figure below.
+
+![alt text here](implementation_1.png)
+![alt text here](implementation_2.png)
 
 ### Setup R environment
 1. R environment for package build is setup using RStudio software and a github repository is linked for version control.
@@ -184,36 +195,36 @@ A brief diagram of implementing our package (and the class) is presented in the 
 1.	To support subset capability with existing methods from all Experiment classes, we override these methods and add subset support to them made possible by use of direct inheritance from these classes.
 2.	For methods that exist with multiple classes, we create a single function and then call this function in the generic function of each of the class method to minimize the code redundancy and to increase code reusability.
 3.	The methods inherited from the Experiment classes to which subset support have been added through the strategy described above are specified below:
-a.	show()
-i.	The show() is a base R (methods class) function that prints the object summary, visualizes a plot or prints other necessary information which is suitable for that particular class of objects. Here, we override the show() function and mimic the output of other Experiment classes but additionally add printing of subsets and subset assays for easier understanding of the current object structure. 
-b.	assay()
-i.	An S4 method that can set or get an assay (data) depending upon on which side of the assignment operator (<-) it is used. In our package, we override this method to support setting or getting an assay from a subset aswell by using an additional parameter called ‘subsetName’ in which you can specify the name of the subset to which or from which subset you want to set or extract an assay.
-c.	rowData()
-i.	An S4 method that can set or get rowData (row or genes or features metadata) associated with the current object. In this package, we additionally add support to set or get rowData specifically from a subset by specifying the name of the subset in the additional ‘subsetName’ parameter. This data occasionally includes additional information abou the genes or features in the dataset and is also used to store computations limited to the genes for example, statistics computed for variable genes are stored in the rowData of the object.
-d.	colData()
-i.	An S4 method that can setor get colData (columns or cells or samples metadata) associated with the current object. In our package, we additionall add support to set or get colData specifically from a subset by specifying the name of the subset in the additional ‘subsetName’ parameter. This data may also include additional information about the samples such as computed clusters or sample information.
-e.	metadata()
-i.	A general S4 method to store additional metadata about the dataset which cannot be included in the rowData or colData. This slot generally includes information about how the data was extracted by a particular protocol. Here, we allow the users to use the additional ‘subsetName’ parameter to additionally store metadata for just a particular subset of interest.
-f.	reducedDim()
-i.	The reducedDim S4 method sets or gets the dimensionality reduction results to or from an Experiment object. Additional support for storage and retrieval of dimensionality reduction results for subsets is added through the ‘subsetName’ parameter.
-g.	reducedDims()
-i.	The reducedDims S4 method sets or gets multiple reducedDims to or from an Experiment object. Additional support for doing so with subsets is added through the `subsetName` parameter.
-h.	reducedDimNames()
-i.	The reducedDimNames S4 method sets or gets the names of the stored dimensionality reduction results in an Experiment object. By using the ‘subsetName’ parameter, names of the reducedDims can be retrieved or modified from a subset.
-i.	altExp()
-i.	The altExp S4 method sets or gets additional alternative experiment objects to the parent Experiment object. We have added support to add or remove (or retrieve) alternative experiments to each specific subset by using the ‘subsetName’ parameter.
-j.	altExps()
-i.	The altExps S4 method sets or gets multiple alternative experiment objects to the parent Experiment object. We have added support for adding, removing or retrieving of multiple alternative experiments from a specific subset by using the ‘subsetName’ parameter.
-k.	altExpNames()
-i.	The altExpNames S4 method gets or sets names of the stored alternative experiments in an Experiment object. Similarly, names of the stored alternative experiments can be set or get from subsets using the additional ‘subsetName’ parameter.
-l.	spatialData()
-i.	The spatialData S4 method is explicitly available in the ‘SpatialExperiment’ class to set or get the spatial data from an object. We have added subset support to set or get spatial data to or from a subset using the additional ‘subsetName’ parameter as long as the object is inherited from the parent ‘SpatialExperiment’ class.
-m.	spatialCoords()
-i.	The spatialCoords getter is a complimentary method to the spatialData method and retrives only the spatial coordinates from the overall spatial data. We have added subset support to this method which allows the users to retrieve the spatial coordinates just for a particular subset by specifying the name of the subset in the additional ‘subsetName’ parameter.
-n.	rowLinks()
-i.	The rowLinks accessor method retrieves the information of the rows linked with the row tree in the ‘TreeSummarizedExperiment’ class. Here we have added support for subsets using the ‘subsetName’ parameter which lets us retrieve the rowLinks for just a particular subset as long as the object is inherited from the same parent class.
-o.	colLinks()
-i.	The colLinks accessor method retrieves the information of the columns linked with the col tree in the ‘TreeSummarizedExperiment’ class. Here we have added support for subsets using the ‘subsetName’ parameter which lets us retrieve the colLinks for just a particular subset as long as the object is inherited from the same parent class.
+- show()
+The show() is a base R (methods class) function that prints the object summary, visualizes a plot or prints other necessary information which is suitable for that particular class of objects. Here, we override the show() function and mimic the output of other Experiment classes but additionally add printing of subsets and subset assays for easier understanding of the current object structure. 
+- assay()
+An S4 method that can set or get an assay (data) depending upon on which side of the assignment operator (<-) it is used. In our package, we override this method to support setting or getting an assay from a subset aswell by using an additional parameter called ‘subsetName’ in which you can specify the name of the subset to which or from which subset you want to set or extract an assay.
+- rowData()
+An S4 method that can set or get rowData (row or genes or features metadata) associated with the current object. In this package, we additionally add support to set or get rowData specifically from a subset by specifying the name of the subset in the additional ‘subsetName’ parameter. This data occasionally includes additional information abou the genes or features in the dataset and is also used to store computations limited to the genes for example, statistics computed for variable genes are stored in the rowData of the object.
+- colData()
+An S4 method that can setor get colData (columns or cells or samples metadata) associated with the current object. In our package, we additionall add support to set or get colData specifically from a subset by specifying the name of the subset in the additional ‘subsetName’ parameter. This data may also include additional information about the samples such as computed clusters or sample information.
+- metadata()
+A general S4 method to store additional metadata about the dataset which cannot be included in the rowData or colData. This slot generally includes information about how the data was extracted by a particular protocol. Here, we allow the users to use the additional ‘subsetName’ parameter to additionally store metadata for just a particular subset of interest.
+- reducedDim()
+The reducedDim S4 method sets or gets the dimensionality reduction results to or from an Experiment object. Additional support for storage and retrieval of dimensionality reduction results for subsets is added through the ‘subsetName’ parameter.
+- reducedDims()
+The reducedDims S4 method sets or gets multiple reducedDims to or from an Experiment object. Additional support for doing so with subsets is added through the `subsetName` parameter.
+- reducedDimNames()
+The reducedDimNames S4 method sets or gets the names of the stored dimensionality reduction results in an Experiment object. By using the ‘subsetName’ parameter, names of the reducedDims can be retrieved or modified from a subset.
+- altExp()
+The altExp S4 method sets or gets additional alternative experiment objects to the parent Experiment object. We have added support to add or remove (or retrieve) alternative experiments to each specific subset by using the ‘subsetName’ parameter.
+- altExps()
+The altExps S4 method sets or gets multiple alternative experiment objects to the parent Experiment object. We have added support for adding, removing or retrieving of multiple alternative experiments from a specific subset by using the ‘subsetName’ parameter.
+- altExpNames()
+The altExpNames S4 method gets or sets names of the stored alternative experiments in an Experiment object. Similarly, names of the stored alternative experiments can be set or get from subsets using the additional ‘subsetName’ parameter.
+- spatialData()
+The spatialData S4 method is explicitly available in the ‘SpatialExperiment’ class to set or get the spatial data from an object. We have added subset support to set or get spatial data to or from a subset using the additional ‘subsetName’ parameter as long as the object is inherited from the parent ‘SpatialExperiment’ class.
+- spatialCoords()
+The spatialCoords getter is a complimentary method to the spatialData method and retrives only the spatial coordinates from the overall spatial data. We have added subset support to this method which allows the users to retrieve the spatial coordinates just for a particular subset by specifying the name of the subset in the additional ‘subsetName’ parameter.
+- rowLinks()
+The rowLinks accessor method retrieves the information of the rows linked with the row tree in the ‘TreeSummarizedExperiment’ class. Here we have added support for subsets using the ‘subsetName’ parameter which lets us retrieve the rowLinks for just a particular subset as long as the object is inherited from the same parent class.
+- colLinks()
+The colLinks accessor method retrieves the information of the columns linked with the col tree in the ‘TreeSummarizedExperiment’ class. Here we have added support for subsets using the ‘subsetName’ parameter which lets us retrieve the colLinks for just a particular subset as long as the object is inherited from the same parent class.
 
 ### Document package
 R packages are generally documented in two standard ways, one through ‘roxygen2’ package that creates a documentation page for each function or method and secondly through a package vignette which is more of a user guide. Following both of these standards, we used the ‘roxygen2’ R package to create documentation (Rd files) for each of the function/method in our package that describes the function/method name, short description, input/output of the function/method and a runnable example to show the working of the function/method. These ‘.Rd’ files generated by ‘roxygen2’ then become available online repositories for users to view such as the ‘rddr.io’. 
@@ -228,34 +239,8 @@ The ‘testthat’ package allows us to specify all unit tests within a single �
 # Results & Discussion
 The ExperimentSubset R package was developed based on the implementation specified in the Methods section of this document above. To compare the memory savings offered by our package in contrast to other data structure packages such as the SingleCellExperiment, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow. .....
 
-## Selected Datasets
-1. pbmc datasets
-2. real datasets
-3. simulated datasets
-explain above
-
-
-|Serial No.| Dataset | Dimensions | Sparsity | Type |
-| -------- | ------- | ---------- | -------- | ---- |
-| 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real Dataset |
-| 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real Dataset |
-| 3 | BaronPancreasData('human') | 20125  8569 | 0.9062241 |Real Dataset |
-| 4 | BaronPancreasData('mouse') | 14878  1886 | 0.8897182 | Real Dataset |
-| 5 | KotliarovPBMCData | 32738 58654 | 0.9780209 | Real Dataset |
-| 6 | BuettnerESCData | 38293   288 | 0.7440639 | Real Dataset |
-| 7 | CampbellBrainData | 26774 21086 | 0.9279162 | Real Dataset |
-| 8 | Sample | 31535 13199 | 0.00012 |Sample filled with random values to remove sparseness |
-| 9 | Sample | 27998 25806 | 0.00012 | Sample filled with random values to remove sparseness |
-| 10 | Sample | 20125  8569 | 0.00012 | Sample filled with random values to remove sparseness |
-| 11 | Sample | 14878  1886 | 0.00012 | Sample filled with random values to remove sparseness |
-| 12 | Sample | 32738 58654 | 0.00012 | Sample filled with random values to remove sparseness |
-| 13 | Sample | 38293   288 | 0.00012 | Sample filled with random values to remove sparseness |
-| 14 | Sample | 26774 21086 | 0.00012 | Sample filled with random values to remove sparseness |
-| 15 | pbmc3k | 32738  2700 | 0.9741281 | Real dataset used for testing subset to 3k cells |
-| 16 | pbmc4k | 33694  4340 | 0.9608314 | Real dataset used for testing subset to 4k cells |
-| 17 | pbmc6k | 32738  5419 | 0.9771501 | Real dataset used for testing subset to 6k cells |
-| 18 | pbmc8k | 33694  8381 | 0.9582552 | Real dataset used for testing subset to 8k cells |
-| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 9k cells |
+## Implemented Methods
+Add a table of available methods and their classes
 
 ## Sample Analysis Workflow
 As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accomodated in multiple guides and official tutorials. The step-by-step workflow is described below:
@@ -373,73 +358,87 @@ As explicitly evident from the R scripts above, to run the workflow we use a sin
 
 To further demonstrate the effectiveness of our package, we run the same scripts with datasets described in the Selected Datasets section and tabulate the results according to each of the approach described below.
 
-- describe all strategies
-To compare the results, we utilize 2 approaches overall and multiple datasets:
-For both 2 approaches, we use 7 real datasets, 5 sample datasets and 7 simulated datasets.
+### Selected Datasets for Benchmarking
+To benchmark our package, we selected a number of datasets with varying degree of dimensions and nature of the data to get an accurate depiction of memory saving capability of our package. In doing so, we selected 6 pbmc datasets that are generally considered as standard datasets to test when working with or developing new packages in the single cell and R community. Additionally, because we wanted to get an accurate picture of memory savings, we used 7 real published datasets for benchmarking all of which had varying degree of sparsity and dimensions curated together in the scRNASeq R package. One of the issues with single cell datasets is the sparsity associated with the data, where each dataset largely consists of zeros which makes these resultant datasets extremely sparse in contrast to microarray or bulk RNA-seq datasets. While the original usage of the package is considered for single cell data, the package itself supports all expression data regardless of the protocol and technology used. As such, the package supports expression data from microarrays as well as from bulk RNA-seq protocols. Keeping this in mind, we also benchmark non-sparse datasets which is typical to microarrays and bulk-RNA seq by creating random datasets with the same dimensions as the 1-7 real datasets with near to zero sparsity. This diverse range of datasets allow us to provide an accurate picture of memory savings provided by our package. A list and brief description of the selected datasets is given below:
+
+|Serial No.| Dataset | Dimensions | Sparsity | Type |
+| -------- | ------- | ---------- | -------- | ---- |
+| 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real Dataset |
+| 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real Dataset |
+| 3 | BaronPancreasData('human') | 20125  8569 | 0.9062241 |Real Dataset |
+| 4 | BaronPancreasData('mouse') | 14878  1886 | 0.8897182 | Real Dataset |
+| 5 | KotliarovPBMCData | 32738 58654 | 0.9780209 | Real Dataset |
+| 6 | BuettnerESCData | 38293   288 | 0.7440639 | Real Dataset |
+| 7 | CampbellBrainData | 26774 21086 | 0.9279162 | Real Dataset |
+| 8 | Sample | 31535 13199 | 0.00012 |Sample filled with random values to remove sparseness |
+| 9 | Sample | 27998 25806 | 0.00012 | Sample filled with random values to remove sparseness |
+| 10 | Sample | 20125  8569 | 0.00012 | Sample filled with random values to remove sparseness |
+| 11 | Sample | 14878  1886 | 0.00012 | Sample filled with random values to remove sparseness |
+| 12 | Sample | 32738 58654 | 0.00012 | Sample filled with random values to remove sparseness |
+| 13 | Sample | 38293   288 | 0.00012 | Sample filled with random values to remove sparseness |
+| 14 | Sample | 26774 21086 | 0.00012 | Sample filled with random values to remove sparseness |
+| 15 | pbmc3k | 32738  2700 | 0.9741281 | Real dataset used for testing subset to 3k cells |
+| 16 | pbmc4k | 33694  4340 | 0.9608314 | Real dataset used for testing subset to 4k cells |
+| 17 | pbmc6k | 32738  5419 | 0.9771501 | Real dataset used for testing subset to 6k cells |
+| 18 | pbmc8k | 33694  8381 | 0.9582552 | Real dataset used for testing subset to 8k cells |
+| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 9k cells |
 
 ### Approach 1: dgCMatrix
-dgCMatrix is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively able to compress the zero cells of the matrix. 
+dgCMatrix is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix.....
 
-1. Real datasets with extensive sparsity
-2. Simulated datasets with near to zero sparsity
-3. Sample datasets with extensive sparsity
-
-|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|SCE Total Memory|ES Total Memory|Savings|
-|----------|-------|----------|----------------|--------|---|--|-------|----------------|---------------|-------|
-|1|AztekinTailData|31535 13199|13434.67|0.9296133|1.28 GB|650 MB|49.22|0|0|0|
-|2|BachMammaryData|27998 25806|8239.648|0.9152684|2.23 GB|1.16 GB|47.98|0|0|0|
-|3|BaronPancreasData('human')|20125  8569|5828.225|0.9062241|718 MB|364 MB|49.3|0|0|0|
-|4|BaronPancreasData('mouse')|14878  1886|4990.086|0.8897182|137 MB|73.5 MB|46.35|0|0|0|
-|5|KotliarovPBMCData|32738 58654|	2065.245|	0.9780209|	1.92 GB|	1.04 GB|	45.83|	0|	0|	0|
-|6|BuettnerESCData|38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|	0|	0|	0|
-|7|CampbellBrainData|26774 21086|	4024.644|	0.9279162|	1.71 GB	|992 MB|	41.99|	0|	0|	0|
-|8|Sample sparse dataset  (1)|31535 13199|	283814.4|	0.000123194|	17 GB|	8.33 GB|	51|	0|	0|	0|
-|9|Sample sparse dataset  (2)|27998 25806|	251977.7|	0.000123218|	29.5 GB|	14.5 GB|	50.85|	0|	0|	0|
-|10|Sample sparse dataset  (3)|20125  8569|	181130.1|	0.000123687|	7.11 GB|	3.45 GB|	51.48|	0|	0|	0|
-|11|Sample sparse dataset  (4)|14878  1886|	133908.9|	0.000124662|	1.17 GB|	563 MB|	51.88|	0|	0|	0|
-|12|Sample sparse dataset  (5)|32738 58654|	294641.4|	0.000123562|	78.3 GB|	38.4 GB|	50.96|	0|	0|	0|
-|13|Sample sparse dataset  (6)|38293   288|	344673.6|	0.000125404|	454 MB|	224 MB|	50.66|	0|	0|	0|
-|14|Sample sparse dataset  (7)|26774 21086|	240964.1|	0.000123049|	23.1 GB|	11.3 GB|	51.08|	0|	0|	0|
-|15|pbmc3k|32738  2700|2366.9|	0.9741281|	16.3 MB|	7.16 MB|	56.07|	7743.2 MB|	4485.3 MB| 0 |	
-|16|pbmc4k|33694  4340|4349.038|	0.9608314|	19.1 MB|	8.08 MB|	57.7|	0	|0|	0|
-|17|pbmc6k|32738  5419|2027.635|	0.9771501|	18.5 MB|	8.37 MB|	54.76|	0|	0|	0|
-|18|pbmc8k|33694  8381|4639.048|	0.9582552|	24 MB|	9.93 MB|	58.63|	0	|0|	0|
-|19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97|	83494 MB|	54734.7 MB|	34.44|
+|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
+|----------|-------|----------|----------------|--------|---|--|-------|
+|1|AztekinTailData|31535 13199|13434.67|0.9296133|1.28 GB|650 MB|49.22|
+|2|BachMammaryData|27998 25806|8239.648|0.9152684|2.23 GB|1.16 GB|47.98|
+|3|BaronPancreasData('human')|20125  8569|5828.225|0.9062241|718 MB|364 MB|49.3|
+|4|BaronPancreasData('mouse')|14878  1886|4990.086|0.8897182|137 MB|73.5 MB|46.35|
+|5|KotliarovPBMCData|32738 58654|	2065.245|	0.9780209|	1.92 GB|	1.04 GB|	45.83|
+|6|BuettnerESCData|38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|
+|7|CampbellBrainData|26774 21086|	4024.644|	0.9279162|	1.71 GB	|992 MB|	41.99|
+|8|Sample sparse dataset  (1)|31535 13199|	283814.4|	0.000123194|	17 GB|	8.33 GB|	51|
+|9|Sample sparse dataset  (2)|27998 25806|	251977.7|	0.000123218|	29.5 GB|	14.5 GB|	50.85|
+|10|Sample sparse dataset  (3)|20125  8569|	181130.1|	0.000123687|	7.11 GB|	3.45 GB|	51.48|
+|11|Sample sparse dataset  (4)|14878  1886|	133908.9|	0.000124662|	1.17 GB|	563 MB|	51.88|
+|12|Sample sparse dataset  (5)|32738 58654|	294641.4|	0.000123562|	78.3 GB|	38.4 GB|	50.96|
+|13|Sample sparse dataset  (6)|38293   288|	344673.6|	0.000125404|	454 MB|	224 MB|	50.66|
+|14|Sample sparse dataset  (7)|26774 21086|	240964.1|	0.000123049|	23.1 GB|	11.3 GB|	51.08|
+|15|pbmc3k|32738  2700|2366.9|	0.9741281|	16.3 MB|	7.16 MB|	56.07|	
+|16|pbmc4k|33694  4340|4349.038|	0.9608314|	19.1 MB|	8.08 MB|	57.7|
+|17|pbmc6k|32738  5419|2027.635|	0.9771501|	18.5 MB|	8.37 MB|	54.76|
+|18|pbmc8k|33694  8381|4639.048|	0.9582552|	24 MB|	9.93 MB|	58.63|
+|19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97|
 
 ### Approach 2: Matrix
+Matrix is the standard form of 2D matrices in R and is non-compressed... 
 
-1. Real datasets with extensive sparsity
-2. Simulated datasets with near to zero sparsity
-3. Sample datasets with extensive sparsity
+|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
+|----------|-------|----------|----------------|--------|---|--|-------|
+|1|	AztekinTailData|	31535 13199|	13434.67|	0.9296133|	10.2 GB|	4.67 GB|	54.22|
+|2|	BachMammaryData| 27998 25806|	8239.648|	0.9152684|	17.8 GB|	8.11 GB|	54.44|
+|3|	BaronPancreasData('human')|	20125  8569|	5828.225|	0.9062241|	4.28 GB|	1.94 GB|	54.67|
+|4|	BaronPancreasData('mouse')|	14878  1886|	4990.086|	0.8897182|	681 MB|	317 MB|	53.45|
+|5|	KotliarovPBMCData|	32738 58654|	2065.245|	0.9780209|	39 GB|	21.6 GB|	44.62|
+|6|	BuettnerESCData|	38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|
+|7|	CampbellBrainData|	26774 21086|	4024.644|	0.9279162|	12.6 GB|	6.33 GB|	49.76|
+|8|	Sample sparse dataset  (1)|	31535 13199|	283814.4|	0.000123194|	6.83 GB|	3 GB|	56.08|
+|9|	Sample sparse dataset  (2)|	27998 25806|	251977.7|	0.000123218|	11.9 GB|	5.21 GB|	56.22|
+|10|	Sample sparse dataset  (3)|	20125  8569|	181130.1|	0.000123687|	2.87 GB|	1.25 GB|	56.45|
+|11|	Sample sparse dataset  (4)|	14878  1886|	133908.9|	0.000124662|	475 MB|	204 MB	|57.05|
+|12|	Sample sparse dataset  (5)|	32738 58654|	294641.4|	0.000123562|	31.5 GB|	13.8 GB|	56.19|
+|13|	Sample sparse dataset  (6)|	38293   288|	344673.6|	0.000125404|	186 MB|	83.1 MB|	55.32|
+|14|	Sample sparse dataset  (7)|	26774 21086|	240964.1|	0.000123049|	9.3 GB|	4.07 GB|	56.24|
+|15|	pbmc3k|	32738  2700|	2366.9|	0.9741281|	1.29 GB|	644 MB|	50.08|
+|16|	pbmc4k|	33694  4340|	4349.038|	0.9608314|	2.39 GB|	1.06 GB|	55.65|
+|17|	pbmc6k|	32738  5419|	2027.635|	0.9771501|	2.31 GB|	1.29 GB|	44.16|
+|18|	pbmc8k|	33694  8381|	4639.048|	0.9582552|	4.63 GB|	2.04 GB|	55.94|
+|19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	14.2 GB|	7.83 GB|	44.86|
 
-|Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|SCE Total Memory|ES Total Memory|Savings|
-|----------|-------|----------|----------------|--------|---|--|-------|----------------|---------------|-------|
-|1|	AztekinTailData|	31535 13199|	13434.67|	0.9296133|	10.2 GB|	4.67 GB|	54.22|	0|	0|	0|
-|2|	BachMammaryData| 27998 25806|	8239.648|	0.9152684|	17.8 GB|	8.11 GB|	54.44|	0|	0|	0|
-|3|	BaronPancreasData('human')|	20125  8569|	5828.225|	0.9062241|	4.28 GB|	1.94 GB|	54.67|	0|	0|	0|
-|4|	BaronPancreasData('mouse')|	14878  1886|	4990.086|	0.8897182|	681 MB|	317 MB|	53.45|	0|	0|	0|
-|5|	KotliarovPBMCData|	32738 58654|	2065.245|	0.9780209|	39 GB|	21.6 GB|	44.62|	0|	0|	0|
-|6|	BuettnerESCData|	38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|	0|	0|	0|
-|7|	CampbellBrainData|	26774 21086|	4024.644|	0.9279162|	12.6 GB|	6.33 GB|	49.76|	0|	0|	0|
-|8|	Sample sparse dataset  (1)|	31535 13199|	283814.4|	0.000123194|	6.83 GB|	3 GB|	56.08|	0|	0|	0|
-|9|	Sample sparse dataset  (2)|	27998 25806|	251977.7|	0.000123218|	11.9 GB|	5.21 GB|	56.22|	0|	0|	0|
-|10|	Sample sparse dataset  (3)|	20125  8569|	181130.1|	0.000123687|	2.87 GB|	1.25 GB|	56.45|	0|	0|	0|
-|11|	Sample sparse dataset  (4)|	14878  1886|	133908.9|	0.000124662|	475 MB|	204 MB	|57.05|	0|	0|	0|
-|12|	Sample sparse dataset  (5)|	32738 58654|	294641.4|	0.000123562|	31.5 GB|	13.8 GB|	56.19|	0|	0|	0|
-|13|	Sample sparse dataset  (6)|	38293   288|	344673.6|	0.000125404|	186 MB|	83.1 MB|	55.32|	0|	0|	0|
-|14|	Sample sparse dataset  (7)|	26774 21086|	240964.1|	0.000123049|	9.3 GB|	4.07 GB|	56.24|	0|	0|	0|
-|15|	pbmc3k|	32738  2700|	2366.9|	0.9741281|	1.29 GB|	644 MB|	50.08|	2700.4 MB|	2148.1 MB|	0|
-|16|	pbmc4k|	33694  4340|	4349.038|	0.9608314|	2.39 GB|	1.06 GB|	55.65|	0|	0|	0|
-|17|	pbmc6k|	32738  5419|	2027.635|	0.9771501|	2.31 GB|	1.29 GB|	44.16|	0|	0|	0|
-|18|	pbmc8k|	33694  8381|	4639.048|	0.9582552|	4.63 GB|	2.04 GB|	55.94|	0|	0|	0|
-|19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	14.2 GB|	7.83 GB|	44.86|	0|	0|	0|
-
-
-In both approach 1 and 2, we compare the size of the resultant objects as well as the memory consumed during the example workflow.
+### Benchmarking Results
+In both approach 1 and 2, we compare the size of the resultant objects. We see that memory is saved .....
 
 ![alt text here](results.png)
 
-describe results
+describe results more in detail ...
 
 ## Provenance Tracking
 One of the issues in typical scRNA-Seq workflows is the tracking of data between different forms, shapes, sizes and structures when it undergoes manipulation in different processes in an analysis workflow. In the sample analysis workflow described above, the original input data undergoes manipulation through different methods and to ensure that data in different forms are related/connected to each other, we implemented a mechanism within our package for this purpose in all of our structural functions. For users, we offer the use of `subsetSummary` function to display the current form and structure of the data at any given point in an analysis workflow. 
@@ -454,12 +453,15 @@ subsetSummary(es)
 # Conclusion, limitations, & future work
 
 ## Conclusion
-- ES package offers this
-- Results show that it is efficient
+The ExperimentSubset package developed as a result of this thesis project offers a convenient and systematic way to manage subsets of data particularly for expression data handled by other Experiment packages by directly building on top of these already available classes. The package due to its implementation offers memory saving features when redundant data is present which is not possible with other data-containers. Additionally, it offers provenance tracking as a single ExperimentSubset object can handle multiple subsets and can manage the relationship between data in different provenance stages during an analysis workflow. The benchmarking with different real and sample datasets has shown that ExperimentSubset package offers significant memory savings especially when subsets are created in an analysis pipeline.
 
 ## Limitations
-Analysis should have subsets and depends on sparsity and counts per cell
-diff in 0 and nonzero sizes is due to 0 occupying more memory
+As the ExperimentSubset package is mainly concerned with analysis workflows that may involve creation or manipulation of subsets, the main features offered by this package are also concerned with subsets. Using the ExperimentSubset package with workflows that do not involve subsets will not offer any memory saving, however since the package is built on top of other data-containers, it will still work as originally intended. Similarly, the memory saving offered by our package is directly influenced by the nature, shape and number of subsets created in a workflow pipeline, with greater savings possible when more subsets are created and these subsets contain redundant data.
+
+Sparsity and counts/cell also influence the memory that may be saved by our package, with lower sparsity and higher counts/cell increases the memory conservation. Another memory limitation is imposed by the matrices (Matrix) where zeros consume more memory since the underneath R environment considers zero (Matrix) as a placeholder for a maximum supported value. However, this limitation does not seem to have an effect on matrices in dgCMatrix form. 
 
 ## Future Work
-- works with available 5 classes and all general expression data, but need to generalize it for multiassaydata 
+At the moment, the ExperimentSubset package offers direct creation of objects from all general expression data as well as conversion from other Experiment classes including SummarizedExperiment, RangedSummarizedExperiment, SingleCellExperiment, TreeSummarizedExperiment and Spatial Experiment. However, it does not support conversion and support of objects from MultiAssayExperiment which offers integration of data from multiple modalities. Our future work involves the integration of multiple data modalities in our package while offering the same features and memory saving capability as before.
+
+# References {-}
+To add
