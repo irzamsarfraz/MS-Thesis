@@ -17,6 +17,9 @@ subtitle: "ExperimentSubset"
 editor_options:
   chunk_output_type: console
 ---
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(ExperimentSubset)
+```
 
 # Abstract {-}
 
@@ -167,20 +170,53 @@ A brief diagram of implementing our package (and the class) is presented in the 
 
 ### Setup R environment
 1. R environment for package build is setup using RStudio software and a github repository is linked for version control.
-2. R supports multiple system of classes where each serves a specific purpose and needs. A comparison of these classes is provided in the table below:
-
-3. As the requirements of our package is to serve as a drop-in replacement class for other `Experiment` classes, we use the same class system as these `Experiment` classes i.e., `S4` class system that uses a systematic way of managing setters and getters and allows inclusion of slots.
-4. The drop-in replacement feature would allow our package and classes to be used interchangeably with the existing methods that utilize other `Experiment` classes without having the need to convert between these.
-5. As there are 5 Experiment classes namely `SummarizedExperiment`, `RangedSummarizedExperiment`, `SingleCellExperiment`, `TreeSummarizedExperiment` and `SpatialExperiment`, we inherit from each of these separately to build new subset classes that we name as `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SusbetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment`. All five of these new Subset classes inherit directly from their parent `Experiment` classes so as to allow these subset classes to work exactly as intended by their original parent `Experiment` classes as a drop-in replacement with existing methods but adding subset support to these new Subset classes.
+2. As the requirements of our package is to serve as a drop-in replacement class for other `Experiment` classes, we use the same class system as these `Experiment` classes i.e., `S4` class system that uses a systematic way of managing setters and getters and allows inclusion of slots.
+3. The drop-in replacement feature would allow our package and classes to be used interchangeably with the existing methods that utilize other `Experiment` classes without having the need to convert between these.
+4. As there are 5 Experiment classes namely `SummarizedExperiment`, `RangedSummarizedExperiment`, `SingleCellExperiment`, `TreeSummarizedExperiment` and `SpatialExperiment`, we inherit from each of these separately to build new subset classes that we name as `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SusbetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment`. All five of these new Subset classes inherit directly from their parent `Experiment` classes so as to allow these subset classes to work exactly as intended by their original parent `Experiment` classes as a drop-in replacement with existing methods but adding subset support to these new Subset classes.
 
 ### Implement Constructor
 1. To enable easy conversion from other `Experiment` classes, we implement a simple constructor function `ExperimentSubset()` that takes input an object that belongs to any of the other `Experiment` classes and converts it into a subset class appropriate to that object. This allows easy use of the object as a drop-in replacement for other `Experiment` classes in downstream analysis.
+
+```{r, message=FALSE, warning=FALSE}
+library(TENxPBMCData)
+
+# Load a sample SingleCellExperiment object
+sce <- TENxPBMCData(dataset = "pbmc3k")
+
+# Use ExperimentSubset constructor to convert it to a ES object
+es <- ExperimentSubset(sce)
+
+print(es)
+```
+
 2. The constructor method also supports quick subsetting if the creation of a subset is required at the time of the creation of the object. For example, in case when other `Experiment` objects are being used in an analysis workflow and subset support is needed, users can immediately convert to a subset class and create a specified subset from within the constructor method. For this purpose we have optional parameters in the constructor method that allow this creation of a subset.
+
+```{r, message=FALSE, warning=FALSE}
+library(TENxPBMCData)
+
+# Load a sample SingleCellExperiment object
+sce <- TENxPBMCData(dataset = "pbmc3k")
+
+# Use ExperimentSubset constructor to convert it to a ES object and create a subset from within the constructor method
+es <- ExperimentSubset(sce, subset = list(subsetName = "subset1", rows = c(1:10), cols = c(1:5), parentAssay = "counts"))
+
+print(es)
+
+subsetSummary(es)
+```
 
 ### Internal class AssaySubset
 1. To store subset information in our package we create another internal class called `AssaySubset` which serves not only for storing subset information but also as a convenient way to link these subsets to the original parent data and other subsets.
 2. The `AssaySubset` class is also an `S4` class but it is not exported which means it cannot be directly used by the users. Instead, the constructor method of this class is called in our wrapper method `createSubset()` that internally uses this constructor method to initialize an object of class `AssaySubset` and stores the relevant subset information and characteristics in this `AssaySubset` object. This `AssaySubset` object that stores the subset information is saved inside the `subset` slot of subset class which uses this slot and the information inside this slot to coordinate the subsets with the parent data.
-3. Each `AssaySubset` object has further multiple slots that store the name of the subset, name of the parent assay, row indices from the parent assay that are part of this subset and column indices from the parent assay that are part of this subset. Additionally, each `AssaySubset` object stores a empty object of the original class to store non-redundant transformed data matrices within this subset. The row/column indices work similar to pointers and by using the parent assay name these indices are used to reference the redundant data from the original parent assay. This strategy eliminates the need to store any redundant data thus saves considerable amount of memory. The overall structure of this `AssaySubset` class and how the member slots of this class are used to reference data from parent assays is shown in the figure.
+3. Each `AssaySubset` object has further multiple slots that store the name of the subset, name of the parent assay, row indices from the parent assay that are part of this subset and column indices from the parent assay that are part of this subset. Additionally, each `AssaySubset` object stores a empty object of the original class to store non-redundant transformed data matrices within this subset. The row/column indices work similar to pointers and by using the parent assay name these indices are used to reference the redundant data from the original parent assay. This strategy eliminates the need to store any redundant data thus saves considerable amount of memory. The overall structure of this `AssaySubset` class and how the member slots of this class are used to reference data from parent assays is displayed in the code snippet below.
+
+```{r, warning=FALSE, message=FALSE}
+# Printing the class of a subset created earlier
+print(class(es@subsets$subset1))
+
+# Printing the internal AssaySubset class structure used by each subset object
+print(es@subsets$subset1)
+```
 
 ### Implement subset manipulation methods
 1. `createSubset()` method is implemented for the creation of a subset. The input to this method is an `ExperimentSubset` object and specific parameters that specify the subset name, row/column indices of the parent assay and the name of the parent assay to which this subset belongs. The result of using this function is the creation of a new `AssaySubset` class object that stores the information of the new subset which is ultimately stored as an element in the input `ExperimentSubset` object.
@@ -277,10 +313,59 @@ To ensure the correctness of the our package throughout its development and post
 The `testthat` package allows us to specify all unit tests within a single `testthat.R` file with their corresponding inputs and the expected outputs.
 
 # Results & Discussion
-The `ExperimentSubset` R package was developed based on the implementation specified in the 'Methods' section of this document. To compare the memory savings offered by our package in contrast to other data structure packages such as the `SingleCellExperiment`, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow. .....
+The `ExperimentSubset` R package was developed based on the implementation specified in the 'Methods' section of this document. To compare the memory savings offered by our package in contrast to other data structure packages such as the `SingleCellExperiment`, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow.
 
 ## Implemented Methods
-Add a table of available methods and their classes
+1. `ExperimentSubset` constructor
+2. `createSubset`
+3. `setSubsetAssay`
+4. `getSubsetAssay`
+5. `subsetSummary`
+6. `subsetParent`
+7. `subsetCount`
+8. `subsetAssayCount`
+9. `subsetNames`
+10. `subsetAssayNames`
+11. `subsetDim`
+12. `subsetRowData`
+13. `subsetColData`
+14. `subsetColnames`
+15. `subsetRownames`
+16. `subsetRowData<-`
+17. `subsetColData<-`
+18. `subsetColnames<-`
+19. `subsetRownames<-`
+20. `show`
+21. `assay`
+22. `assay<-`
+23. `rowData`
+24. `rowData<-`
+25. `colData`
+26. `colData<-`
+27. `metadata`
+28. `metadata<-`
+29. `reducedDim`
+30. `reducedDim<-`
+31. `reducedDims`
+32. `reducedDims<-`
+33. `reducedDimNames`
+34. `reducedDimNames<-`
+35. `altExp`
+36. `altExp<-`
+37. `altExps`
+38. `altExps<-`
+39. `altExpNames`
+40. `altExpNames<-`
+41. `subsetSpatialCoords`
+42. `subsetSpatialData`
+43. `subsetSpatialData<-`
+44. `subsetRowLinks`
+45. `subsetColLinks`
+46. `spatialCoords`
+47. `spatialData`
+48. `spatialData<-`
+49. `rowLinks`
+50. `colLinks`
 
 ## Sample Analysis Workflow
 As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accommodated in multiple guides and official tutorials. The step-by-step workflow is described below:
@@ -297,18 +382,15 @@ An R script that can be used to compute the analysis above with a `SingleCellExp
 
 ```{r, eval = FALSE}
 #Load PBMC4K dataset
-# sce1 <- TENxPBMCData(dataset = "pbmc4k")
-sce1 <- sce
+sce1 <- TENxPBMCData(dataset = "pbmc3k")
 
 #Compute perCellQCMetrics on counts matrix:
 perCellQCMetrics <- perCellQCMetrics(assay(sce1, "counts"))
 colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
 
 #Filter cells with low column sum and create a new object:
-filteredCellsIndices <- which(colData(sce1)$sum > 1500)
-# sce1 <- sce1[, order(-sce1@colData$sum)]
-sce2 <- sce1[,filteredCellsIndices]
-# sce2 <- sce1[,1:round(ncol(es) * 0.40)]
+sce1 <- sce1[, order(-sce1@colData$sum)]
+sce2 <- sce1[,1:round(ncol(es) * 0.40)]
 
 #Normalize sce2 using scater library and store it back:
 assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
@@ -323,20 +405,6 @@ reducedDim(sce3, type = "PCA") <- calculatePCA(assay(sce3, "filteredCellsNormali
 #Find clusters from reducedDims of highly variable genes and store the results back into colData
 clusterPC = kmeans(reducedDim(sce3, "PCA"), 5)$cluster
 colData(sce3) <- cbind(colData(sce3), clusterPC)
-
-#Three SCE object sizes
-totalSize <- object_size(sce1) + object_size(sce2) + object_size(sce3) 
-
-
-print("Dimensions")
-print(dim(sce))
-
-print("Original SCE Total Size:")
-print(totalSize, unit = "Mb")
-
-print("ES Total Size:")
-#Single ES object size
-print(object_size(es), unit = "Mb")
 ```
 
 The sample analysis described above creates multiple subsets and as can be seen that **3** `SingleCellExperiments` objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using `ExperimentSubset` below:
@@ -347,7 +415,7 @@ The sample analysis described above creates multiple subsets and as can be seen 
 #################################
 
 #Load PBMC4K dataset and create ExperimentSubset object:
-# sce <- TENxPBMCData(dataset = "pbmc4k")
+sce <- TENxPBMCData(dataset = "pbmc4k")
 es <- ExperimentSubset(sce)
 
 #Compute perCellQCMetrics on counts matrix:
@@ -355,16 +423,10 @@ perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
 colData(es) <- cbind(colData(es), perCellQCMetrics)
 
 #Filter cells with low column sum and create a new subset called ‘filteredCells’:
-## rank cells in order of highest sum
 es <- es[, order(-es@colData$sum)]
-#filteredCellsIndices <- which(colData(es)$sum > 1500)
-## keep top cells only 40% in a new subset
 es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
-#es <- createSubset(es, "filteredCells", cols = filteredCellsIndices, parentAssay = "counts")
-
 
 #Normalize ‘filteredCells’ subset using scater library and store it back:
-# assay(es, "filteredCells", subsetAssayName = "filteredCellsNormalized") <- normalizeCounts(assay(es, "filteredCells"))
 es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
 
 #Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
@@ -380,9 +442,6 @@ colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000")
 
 #Show the current condition of the ExperimentSubset object:
 subsetSummary(es)
-
-# #Single ES object size
-# print(object_size(es), unit = "Mb")
 ```
 
 As explicitly evident from the R scripts above, to run the workflow we use a **single** `ExperimentSubset` object in contrast to **3** `SingleCellExperiment` objects for the same analysis. 
@@ -474,18 +533,18 @@ To benchmark our package, we selected a number of datasets with varying degree o
 |19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	14.2 GB|	7.83 GB|	44.86|
 
 ### Benchmarking Results
-In both approach 1 and 2, we compare the size of the resultant objects. We see that memory is saved .....
+In both approach 1 and 2, we compare the size (memory occupied) by the resultant objects and illustrate the memory savings with the figure below. The grey and yellow lines that stretch across the x-axis represent the savings in each of dataset (x-axis labels) using the first and the second approach. It is evident that using the `ExperimentSubset` package offers significant memory savings as compared to using other `Experiment` classes where one has to use multiple objects in the case of subsets. However, sparsity and the average counts in each dataset do play a minor role in shaping the overall savings in an object. This pattern can be observed by the smooth line in the middle of the figure below that corresponds to the randomly populated sample datasets with zero sparsity and similar average counts.
 
 ![](results.png)
-
-describe results more in detail ...
 
 ## Provenance Tracking
 One of the issues in typical scRNA-Seq workflows is the tracking of data between different forms, shapes, sizes and structures when it undergoes manipulation in different processes in an analysis workflow. In the sample analysis workflow described above, the original input data undergoes manipulation through different methods and to ensure that data in different forms are related/connected to each other, we implemented a mechanism within our package for this purpose in all of our structural functions. For users, we offer the use of `subsetSummary` function to display the current form and structure of the data at any given point in an analysis workflow. 
 
 ```{r, message=FALSE, warning=FALSE}
-library(ExperimentSubset)
+# Read in a sample ES object
 es <- readRDS("es.rds")
+
+# Display the summary of subsets
 subsetSummary(es)
 ```
 
