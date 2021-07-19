@@ -16,6 +16,8 @@ output:
 subtitle: "ExperimentSubset"
 editor_options:
   chunk_output_type: console
+bibliography: references.bib
+csl: ieee.csl
 ---
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 library(ExperimentSubset)
