@@ -167,8 +167,7 @@ Keeping in view the above arguments, we use the `S4` class system to implement o
 
 A brief diagram of implementing our package (and the class) is presented in the figure below.
 
-![](implementation_1.png)
-![](implementation_2.png)
+![](implementation.png)
 
 ### Setup R environment
 1. R environment for package build is setup using RStudio software and a github repository is linked for version control.
