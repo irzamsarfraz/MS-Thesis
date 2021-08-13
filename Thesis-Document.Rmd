@@ -13,7 +13,7 @@ output:
     self_contained: true
   pdf_document:
     toc: yes
-subtitle: "ExperimentSubset"
+subtitle: "ExperimentSubset: An R package to manage subsets of Bioconductor Experiment objects"
 editor_options:
   chunk_output_type: console
 bibliography: references.bib
@@ -74,6 +74,13 @@ The first and the foremost task of any such analysis is the choice of a data str
 However, issues arise when a range of analytical methods are integrated in a single toolkit or an analytical pipeline, as is the case with many of the proposed command line toolkits or Shiny web-interfaces  [@Chang2020]. One issue that is of particular interest, is the generation and management of subsets of scRNA-Seq data, the manipulation of which is abundant in many of the common tasks of analysis pipeline such as during the identification of highly variable genes  [@Yip2018] or the integration of multiple assays [@Stuart2019] or even basic filtering steps. In such cases, the available choice of containers does not provide flexibility in terms of storage of such subsets and the consequent usage in the downstream analysis. In many cases where there are several libraries and methods integrated together to form a streamlined analysis pipeline, as in the case of many toolkits and Shiny applications [@JenkinsD2020], multiple objects from these containers at times hold the same data albeit in subset form. This has widespread consequences in terms of increased code complexity against the underlying analysis, data redundancy, and increased memory consumption as well as complexity that arises from the handling of multiple objects created due to the subsets of the data. Furthermore, because of the creation of multiple objects that essentially point to the same data, provenance tracking is often overlooked. 
 
 Typically, in such analyses, the utmost concern of the researcher is to apply the appropriate statistical technique to gain useful biological insights. Alternatively, in the case of a toolkit programmer, the main concern is the addition of functionality to support such analyses. In both scenarios, data handling and management is ultimately at the bottom of the workflow stack. Therefore, the complexity and redundancy that emerges from the creation of a collection of objects due to the nested nature of the subsets that are essentially pointing to the same data, results in disastrous implications as far as time and memory consumption are concerned. These factors become especially significant when datasets are enormous [@10xGenomics] and the corresponding analyses are tricky, as is the case with scRNA-Seq datasets.
+
+To better understand this, we describe a sample workflow in the figure below which uses a 'raw' `counts` matrix as a starting point enclosed in a `SingleCellExperiment` object with features/genes in the rows and samples/cells in the columns.
+
+![](motivation.png)
+In this specific workflow, the `counts` matrix is filtered to remove the empty droplets and is further filtered to remove the poor quality samples/cells based on some specific criteria, possibly removing the cells with low column sums. The filtered matrix could then undergo normalization/transformation and eventually be scaled which can then be used for the extraction of the top most highly variable genes. At this point in the workflow, both the complete scaled matrix as well as the matrix against just the top variable genes could be used separately in the downstream analysis which may include a number of things like dimensionality reduction and/or clustering. Additionally, one could potentially just use a subset of the samples/cells for downstream analysis, for example one may particularly be interested in performing the downstream analysis with just a specific type of cells (e.g. T-Cells in pbmc dataset). 
+
+To understand the issues with this approach, we consider the number of subsets that are created in this workflow. During this workflow, first subset was created when empty droplets were removed, a second subset was created when poor quality samples were removed, a third subset was created when specific type of cells were used (T-Cells) and finally a fourth subset was created when the top most variable genes were separated for downstream analysis. Since the manipulation of subsets is not possible with the currently available data-containers/classes, this results in the creation of five objects just for this sample workflow where some of the objects are retaining the redundant data and thus not result in higher memory consumption in terms of object sizes but also creates complexity in terms of data provenance.
 
 ## Problem statement
 The available data-structure classes for manipulation of high-throughput sequencing data do not support storage, management and provenance tracking of subsets of the data which are quite common in a typical analysis workflow. Therefore, there is a need to develop a data-structure class that can efficiently manage subsets of such data while maintaining data provenance.
@@ -144,29 +151,29 @@ The overall research methodology for this study includes the package design (hig
 ![](method_top.png)
 
 ## Package Design
-Keeping in view the objectives and scope of the package, an abstract logical design of the package utility is presented in the figure.
+Keeping in view the objectives and scope of the package, an abstract logical design of the package (in regards to other `Experiment` classes) is illustrated in the figure below with specific importance on the creation and manipulation of different types of subsets.
 
 ![](design.png)
 
-In the figure above, an abstract design for the utlitiy of the package is presented. The goal of the package is to provide the ability to create subsets from available main data `assays` (counts, logCounts etc. from the figure) and link them in a hierarchical order. This linking of assays allows the creation of hierarchical subsets which are common during large and complex analysis workflows. Essentially, subsets can be created from either the main assays, or other subsets, where the the newly created subset can have a subset of rows or columns or a combination of both. 
+The goal of the package is to provide the ability to create subsets from available main data `assays` (`counts`, `logCounts` etc. from the figure) and link them in a hierarchical order thus maintaining data provenance. This linking of assays allows the creation of hierarchical subsets which are common during large and complex analysis workflows. Essentially, subsets can be created from either the main assays, or other subsets, where the the newly created subset can have a subset of rows or columns or a combination of both. Additionally, the overlapping rectangles represent the storage of multiple assays against a single subset, for example a subset generated from a `counts` `assay` could itself undergo normalization/transformation and would need to store back this additional subset-specific data back into the subset. In the figure above, subset1 is created by retaining some rows and all columns of the original object, subset2 is created by retaining all rows but some columns, subset3 contains some rows and some columns and finally the subset4 is created by retaining some rows and some columns from the previous subset3, thus illustrating that any sort of subset in regards to the dimension and assay could potentially be created by using this package.  
 
 ![](class_design.png)
 
-The figure above demonstrates the general class structure of the package. 
+The figure above shows the general internal proposed structure of the class object, where the overall object can have multiple main assays (inherited from the parent `Experiment` class) and in addition to these assays, it should be able to store subsets and subset specific data. Subset-specific information includes the name of the subset which is used to identify the subset, row/column indices which are used to fetch the data directly from a main assay and therefore would help in memory savings, name of the parent assay which helps in both fetching the data as well as helps in maintaining data provenance. Additionally, subset-specific experiment data is stored in an empty `Experiment` object which should be the same as the parent object to avoid maintenance and compatibility issues.
 
 ![](class_diagram.png)
 
-The figure above represents the class diagram of the new proposed class to manage subsets of data. 
+The figure above represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
 
 ## Package Implementation
 The R programming language supports multiple types of object-oriented class systems including `S3`, `S4`, `R5` and `R6`. For the implementation of the said package, we use the `S4` class system because of the following two reasons:
 
-1. `S4` class system is more OOP oriented (although R6 perfectly mimics standard OOP) than other classes, where you can have setter/getter methods with a single generic.
+1. `S4` class system is more OOP oriented (although R6 perfectly mimics standard OOP) than other classes, where you can have setter/getter methods with a single generic function.
 2. Experiment classes that we wish to inherit are also `S4`-based. 
 
 Keeping in view the above arguments, we use the `S4` class system to implement our class by inheriting from other `Experiment` classes. 
 
-A brief diagram of implementing our package (and the class) is presented in the figure below.
+The figure below describes the workflow to implement this package starting from setting up the R environment using RStudio IDE, implementing the class structure for inheritance, implementing the necessary methods and internal classes and finally testing the package on sample datasets to generate results. All of these steps are further described in detail below with the supporting R code.
 
 ![](implementation.png)
 
@@ -370,7 +377,9 @@ The `ExperimentSubset` R package was developed based on the implementation speci
 50. `colLinks`
 
 ## Sample Analysis Workflow
-As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accommodated in multiple guides and official tutorials. The step-by-step workflow is described below:
+As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accommodated in multiple guides and official tutorials. The step-by-step workflow is illustrated and described below:
+
+![](sampleWorkflow.png)
 
 - Load scRNA-Seq data for analysis (this generally includes raw data such as counts matrices) into the data-structure. 
 - Quality Control metrics are computed for this data and stored into the `colData` slot of the object.
@@ -462,7 +471,7 @@ To further demonstrate the effectiveness of our package, we run the same scripts
 ### Selected Datasets for Benchmarking
 To benchmark our package, we selected a number of datasets with varying degree of dimensions and nature of the data to get an accurate depiction of memory saving capability of our package. In doing so, we selected **6 pbmc datasets** that are generally considered as standard datasets to test when working with or developing new packages in the single cell and R community. Additionally, because we wanted to get an accurate picture of memory savings, we used **7 real published datasets** for benchmarking all of which had varying degree of sparsity and dimensions curated together in the `scRNASeq` R package. One of the issues with single cell datasets is the sparsity associated with the data, where each dataset largely consists of zeros which makes these resultant datasets extremely sparse in contrast to microarray or bulk RNA-seq datasets. While the original usage of the package is considered for single cell data, the package itself supports all expression data regardless of the protocol and technology used. As such, the package supports expression data from microarrays as well as from bulk RNA-seq protocols. Keeping this in mind, we also benchmark non-sparse datasets which is typical to microarrays and bulk-RNA seq by creating **randomly populated datasets with the same dimensions as the 1-7 real datasets with near to zero sparsity**. This diverse range of datasets allow us to provide an accurate picture of memory savings provided by our package. A list and brief description of the selected datasets is given below:
 
-|Serial No.| Dataset | Dimensions | Sparsity | Type |
+|Serial No.| Dataset | Dimensions | Sparsity | Type of Dataset |
 | -------- | ------- | ---------- | -------- | ---- |
 | 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real Dataset |
 | 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real Dataset |
@@ -482,10 +491,10 @@ To benchmark our package, we selected a number of datasets with varying degree o
 | 16 | pbmc4k | 33694  4340 | 0.9608314 | Real dataset used for testing subset to 4k cells |
 | 17 | pbmc6k | 32738  5419 | 0.9771501 | Real dataset used for testing subset to 6k cells |
 | 18 | pbmc8k | 33694  8381 | 0.9582552 | Real dataset used for testing subset to 8k cells |
-| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 9k cells |
+| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 33k cells |
 
 ### Approach 1: dgCMatrix
-`dgCMatrix` is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix.
+`dgCMatrix` is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix. This approach is by default used with all `Experiment` classes for storage and manipulation of matrices within the objects apart from some other more efficient approaches such as `hdf5` and `tileDB` that have recently become popular. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
 
 |Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
 |----------|-------|----------|----------------|--------|---|--|-------|
@@ -510,7 +519,7 @@ To benchmark our package, we selected a number of datasets with varying degree o
 |19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97|
 
 ### Approach 2: Matrix
-`Matrix` is the standard form of 2D matrices in R and is non-compressed. 
+`Matrix` is the standard form of 2D matrices in R and is the non-compressed form of matrices as compared to the `dgCMatrix`. While this is not the default way to store matrices in `Experiment` classes, in many methods the `dgcMatrix` matrix form is indeed converted to this standard form for manipulation and processing and it is therefore important to consider this case as well. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
 
 |Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
 |----------|-------|----------|----------------|--------|---|--|-------|
