@@ -75,12 +75,17 @@ However, issues arise when a range of analytical methods are integrated in a sin
 
 Typically, in such analyses, the utmost concern of the researcher is to apply the appropriate statistical technique to gain useful biological insights. Alternatively, in the case of a toolkit programmer, the main concern is the addition of functionality to support such analyses. In both scenarios, data handling and management is ultimately at the bottom of the workflow stack. Therefore, the complexity and redundancy that emerges from the creation of a collection of objects due to the nested nature of the subsets that are essentially pointing to the same data, results in disastrous implications as far as time and memory consumption are concerned. These factors become especially significant when datasets are enormous [@10xGenomics] and the corresponding analyses are tricky, as is the case with scRNA-Seq datasets.
 
+### Sample Workflow
+
 To better understand this, we describe a sample workflow in the figure below which uses a 'raw' `counts` matrix as a starting point enclosed in a `SingleCellExperiment` object with features/genes in the rows and samples/cells in the columns.
 
 ![](motivation.png)
 In this specific workflow, the `counts` matrix is filtered to remove the empty droplets and is further filtered to remove the poor quality samples/cells based on some specific criteria, possibly removing the cells with low column sums. The filtered matrix could then undergo normalization/transformation and eventually be scaled which can then be used for the extraction of the top most highly variable genes. At this point in the workflow, both the complete scaled matrix as well as the matrix against just the top variable genes could be used separately in the downstream analysis which may include a number of things like dimensionality reduction and/or clustering. Additionally, one could potentially just use a subset of the samples/cells for downstream analysis, for example one may particularly be interested in performing the downstream analysis with just a specific type of cells (e.g. T-Cells in pbmc dataset). 
 
 To understand the issues with this approach, we consider the number of subsets that are created in this workflow. During this workflow, first subset was created when empty droplets were removed, a second subset was created when poor quality samples were removed, a third subset was created when specific type of cells were used (T-Cells) and finally a fourth subset was created when the top most variable genes were separated for downstream analysis. Since the manipulation of subsets is not possible with the currently available data-containers/classes, this results in the creation of five objects just for this sample workflow where some of the objects are retaining the redundant data and thus not result in higher memory consumption in terms of object sizes but also creates complexity in terms of data provenance.
+
+### singleCellTK
+Toolkit
 
 ## Problem statement
 The available data-structure classes for manipulation of high-throughput sequencing data do not support storage, management and provenance tracking of subsets of the data which are quite common in a typical analysis workflow. Therefore, there is a need to develop a data-structure class that can efficiently manage subsets of such data while maintaining data provenance.
@@ -125,6 +130,9 @@ In addition to the above packages that primarily serve as a data-structure or a 
 All the previously discussed packages and containers support the common R paradigm for subsetting data, either with built-in functions or through standard R syntax for subsetting  matrices and data frames. However, storing back these subsets into the original objects and then using them for further data manipulation or transformation while keeping the original data and the subset data does not fall into the design considerations of these packages.
 
 ## SummarizedExperiment
+
+![](se_design.png)
+
 `SummarizedExperiment` is an `S4`-based R class to serve as a data-container for sequencing experiments with properties similar to the `ExpressionSet` class historically used for microarray experiments. `SummarizedExperiment` offers a all-in-one solution to store and coordinate expression measurements from sequencing experiments with support for many other statistical functions and methods that can directly work on `SummarizedExperiment` objects. 
 
 The `slots` available with `SummarizedExperiment` objects include `assay` slot to hold multiple data assays (using `SimpleList`), `colData` slot to hold column metadata (`dataframe`), `rowData` slot to hold row metadata (`dataframe`) and `metadata` slot to hold general metadata (`list`) about the dataset. Common methods provided by `SummarizedExperiment` class include `assay()` method to get or set an `assay`, `colData()` method to get or set `colData`, `rowData()` method to get or set `rowData()` and a `metadata()` method to get or set `metadata` to `SummarizedExperiment` object.
@@ -132,6 +140,9 @@ The `slots` available with `SummarizedExperiment` objects include `assay` slot t
 However, `SummarizedExperiment` objects have a limitation of not letting users to store assays of different sizes within a single object. This is because of its uniform structure that coordinates the assays with `rowData`/`colData` by keeping a object-level row/column size of the overall object to avoid complications. As a result, when assays are subsetted as in many cases during an analysis workflow, they cannot be stored back into the original object. 
 
 ## SingleCellExperiment
+
+![](sce_design.png)
+
 `SingleCellExperiment` is a data-container specifically built for storage and manipulation of single-cell data in contrast to the `SummarizedExperiment` class which has applications throughout gene expression measurements regardless of the data extraction protocol. As a result, `SingleCellExperiment` has additional slots for single-cell data manipulation while keeping all of the slots of `SummarizedExperiment` intact by using a direct inheritance approach. 
 
 The additional slots that have been added to `SingleCellExperiment` class are the `reducedDims` for storage and manipulation of dimensionality reduction results and `altExps` for storage of additional alternative experiments. Both of these slots have been added keeping in mind the specific needs of single-cell data, which due to its extraction protocol requires the addition of spike-in genes to the data assays to somewhat transform the data in a shape better suited for downstream analysis by adjusting for excess zeros which is a major characteristic of single-cell data.
@@ -139,11 +150,18 @@ The additional slots that have been added to `SingleCellExperiment` class are th
 While the `altExps` slot allows the storage of a complete experiment object of different dimensions, it is originally meant for the manipulation of spike-in genes and therefore lacks coordination of data between multiple dimensions. As a result, it does not support direct manipulation of subsets of data similar to the `SummarizedExperiment` class.
 
 ## MultiAssayExperiment
+
+![](mae_design.png)
+
 `MultiAssayExperiment` is another `Experiment` class for storage of expression data, but allows integration of data from multiple experiments and provides a common interface to this integrated data to the user. It is different from both `SummarizedExperiment` and `SingleCellExperiment` classes in its overall objective, which is the integration of datasets through a common variable instead of acting as a basic container for day-to-day manipulation. 
 
 For example, if multiple datasets are available for lung cancer, they can be integrated together through a `sampleMap()` function provided by the class that uses an anchor column for phenotype data to merge and integrate together these many datasets having different characteristics such as age, type of lung cancer, site of tumor tissue and many others. 
 
 The `MultiAssayExperiment` allows the storage of multiple datasets having different dimensions but it is more oriented towards integration of data and therefore does not provide a straightforward approach towards subsetting of single experiments. 
+
+## Seurat
+
+## Monocle
 
 # Research Methodology
 The overall research methodology for this study includes the package design (high-level logical design to support subsets in existing `Experiment` packages), package implementation (development and deployment of package in R environment, including package documentation) and the validation of the efficiency of the package on different datasets (results). The research methodology can be perceived easily from the Figure.
