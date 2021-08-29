@@ -186,8 +186,27 @@ The seurat package uses its own object to manage the data manipulation in the wo
 
 Overall, the Seurat object is an efficient way to manage data especially when using the Seurat workflow since slots (as well as the corresponding functions to get or set data to these slots) are available for each step of the pipeline. However, using the Seurat object outside of the Seurat tool and for custom analysis workflows that utilize functions from other packages and libraries is comparatively complex owing to the fact that a majority of the analysis tools and packages use Experiment classes for input and output. Moreover, provenance in terms of a hierarchical structure of subsets is not possible using the Seurat object.
 
-
 ## Monocle
+Monocle is another R package that integrates a number of tools for common single cell analysis tasks such as input, counting cells, classification of cells, clustering, construction of cell trajectories in pseudotime and differential expression. The monocle proposes the following recommended analysis workflow:
+
+```{r, echo=FALSE}
+mermaid("
+graph TB
+  A[Input data in CellDataSet object]-->B[Classify cells with known marker genes]
+  B-->C[Cluster cells]
+  C-->D[Order cells in pseudotime along a trajectory]
+  D-->E[Perform differential expression analysis]
+")
+```
+
+The monocle R package uses the CellDataSet object based on the ExpressionSet class used widely with microarray experiments commonly having three slots, first for the expression matrix, second for feature metadata and the last one for the sample metadata. Both the ExpressionSet and CellDataSet classes only allow a single matrix to be stored and used at a given point in time. The overall structure of the CellDataSet object can be visualized from the figures below:
+
+![](cds_object1.png)
+
+![](cds_object2.png)
+
+As evident, a single experiment constitutes a single CellDataSet object with a single matrix in assayData slot and the corresponding feature metadata and sample metadata in the phenoData and featureData slots respectively. Therefore, the CellDataSet objects are also not designed in a way to manage subsets or especially subsets with data provenance in mind.
+
 
 # Research Methodology
 The overall research methodology for this study includes the package design (high-level logical design to support subsets in existing `Experiment` packages), package implementation (development and deployment of package in R environment, including package documentation) and the validation of the efficiency of the package on different datasets (results). The research methodology can be perceived easily from the Figure.
