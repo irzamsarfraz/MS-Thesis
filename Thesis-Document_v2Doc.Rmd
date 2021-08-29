@@ -9,9 +9,11 @@ editor_options:
   chunk_output_type: console
 bibliography: references.bib
 csl: ieee.csl
+always_allow_html: true
 ---
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 library(ExperimentSubset)
+library(DiagrammeR)
 ```
 
 # Abstract {-}
@@ -163,6 +165,26 @@ For example, if multiple datasets are available for lung cancer, they can be int
 The `MultiAssayExperiment` allows the storage of multiple datasets having different dimensions but it is more oriented towards integration of data and therefore does not provide a straightforward approach towards subsetting of single experiments. 
 
 ## Seurat
+Seurat is an R console based toolkit that includes extensive algorithms for data pre-processing, processing, integration and visualization, and is used widely especially in terms of integration of multiple data modalities of single cell data. An overview of the seurat workflow is visualized in the figure below:
+
+```{r, echo=FALSE}
+mermaid("
+graph TB
+  A[Input Data]-->B[Normalize Data]
+  B-->C[Scale Data]
+  C-->D[Feature Selection]
+  D-->E[Dimensionality Reduction]
+  E-->F[2D Embedding]
+  F-->G[Clustering]
+  G-->H[Marker Selection]
+")
+```
+
+The seurat package uses its own object to manage the data manipulation in the workflow visualized above known as the seurat object. The seurat object has multiple slots to manage storage and retrieval of assays of multiple data modalities (same or different dimensions) in their own specific slots inside the seurat object. Similarly, the different types of data generated through the seurat workflow are stored inside their specific slots, e.g. highly variable genes identified by the feature selection function are stored in the var.features slot within this object. The overall structure of a sample seurat object is visualized in the figure below:
+
+![](seurat_object.png)
+
+Overall, the Seurat object is an efficient way to manage data especially when using the Seurat workflow since slots (as well as the corresponding functions to get or set data to these slots) are available for each step of the pipeline. However, using the Seurat object outside of the Seurat tool and for custom analysis workflows that utilize functions from other packages and libraries is comparatively complex owing to the fact that a majority of the analysis tools and packages use Experiment classes for input and output. Moreover, provenance in terms of a hierarchical structure of subsets is not possible using the Seurat object.
 
 
 ## Monocle
