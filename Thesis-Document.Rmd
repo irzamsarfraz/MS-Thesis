@@ -53,6 +53,12 @@ The `colData` is short for column data and is always the metadata associated wit
 ### rowData
 The `rowData` as obvious is the metadata associated with the genes (rows) of the dataset (rows of the an assay). The `rowData` has dimensions `m*q` where `m` is the number of genes and `q` >= 0 based on the number of metadata columns (for genes) available for a particular dataset. The `rowData` is often used to store the computed statistics for the genes in the dataset. For example, during the highly variable genes computation, the variance and the mean computed for each gene is stored in separate columns of the `rowData` which may be used at a later stage to identify the most highly variable genes from these statistics. Additionally, `rowData` may be used to store anything that may be related to the genes of the dataset, e.g., genes are often referenced by several different systems of naming conventions (`ENSEMBLE`, `Entrez` or `Gene Symbols`) which can be stored in the `rowData`.
 
+### reducedDims
+
+### altExperiments
+
+### metadata
+
 ### Bioconductor & CRAN
 Packages or libraries built for R environment are available for download and use from multiple sources including R `CRAN`, `Bioconductor` or even directly from `Github`. The Comprehensive R Archive Network (`CRAN`) is the largest repository for R packages maintained by R developers, while `Bioconductor` is a community maintained (R core) repository (as well as a database for sample datasets) and specializes in packages/libraries with applications in biology. Submission to both of these repositories undergo strenuous review (including novelty of the package, code quality and testing) before it is accepted and becomes available for users to download and use. Packages from both of these resources once available can easily be downloaded from within R console environment. 
 
@@ -62,6 +68,8 @@ As previously explained that `Biocodunctor` is a database/repository for R packa
 These Experiment classes including `SummarizedExperiment` and `SingleCellExperiment` are designed in such a way as to allow the users to use the objects of these classes in a more biologically and statistically relevant manner especially considering the workflow of such datasets. For example, these classes allow storage of multiple `assays`, `colData`, `rowData` as well as other types of data such as dimensionality reduction results within the same object as all of these data types are used within an analysis workflow from the same experiment.
 
 Moreover, because these data-containers are specialized, they acquire multiple features necessary for such high-dimensional data such as use of `dgCMatrix` (compressed sparse matrices) for `assay` data, `dataframes` for `colData`/`rowData` and `SimpleList` for dimensionality reduction results, all of which have additional advantages instead of using a single base data-stucture for all types of data.
+
+### Use of Bioconductor Experiment objects
 
 ## Background
 High-throughput experiments like microarrays and RNA sequencing allow simultaneous extraction of data from thousands of genes at the same time, thus enabling researchers and scientists to study the effects of mutations (change in gene structure) and expression changes (quantifying the presence or absence of a gene) in genes that result in phenotype variations [@Reuter2015]. These changes often help us in understanding the underlying causes of numerous diseases, particularly heterogeneous diseases such as cancer, where different cells may represent individual changes at the genetic level [@Haque2017]. 
