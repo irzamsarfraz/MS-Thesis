@@ -54,10 +54,13 @@ The `colData` is short for column data and is always the metadata associated wit
 The `rowData` as obvious is the metadata associated with the genes (rows) of the dataset (rows of the an assay). The `rowData` has dimensions `m*q` where `m` is the number of genes and `q` >= 0 based on the number of metadata columns (for genes) available for a particular dataset. The `rowData` is often used to store the computed statistics for the genes in the dataset. For example, during the highly variable genes computation, the variance and the mean computed for each gene is stored in separate columns of the `rowData` which may be used at a later stage to identify the most highly variable genes from these statistics. Additionally, `rowData` may be used to store anything that may be related to the genes of the dataset, e.g., genes are often referenced by several different systems of naming conventions (`ENSEMBLE`, `Entrez` or `Gene Symbols`) which can be stored in the `rowData`.
 
 ### reducedDims
+The `reducedDim` or `reducedDims` refer to the results computed by dimensionality reduction algorithms including principal component analysis (pca), independent component analysis (ica) and sometimes may also refer to the 2-dimensional embedding techniques such as uniform manifold approximation and projection (umap) or t-distributed stochastic neighbor embedding (tSNE). The results are often stored in a separate `reducedDims` slot in the Experiment objects and can be called when required, for example during plotting functions or for downstream analysis including clustering.
 
 ### altExperiments
+The `altExp`, `altExps` or `altExperiments` refer to the additional data slots reserved by some Experiment classes for additional experiment data which is either not suited for storage in `assays` or have different dimensions from the original object. For example, at times during an analysis workflow, while the expression data for the experiment is stored in the `assays` slot, it is quite possible that additional data such as the spike-in genes (features added to data externally to manipulate the data for better normalization and downstream analysis) are added which cannot be directly stored in the `assays` slot of the Experiment classes. For this purpose, `altExps` slots allow the users to store complete additional Experiment objects (with varying dimensions) within the same object.
 
 ### metadata
+The `metadata` slot is available with all Experiment classes and refers to any additional data or information about the data that may not particularly fit to any other of the available slots in these classes. Occasionally, `metadata` is used to store the information about the authors, information about the protocols that are used to generate the data and to describe the nature of the data.  
 
 ### Bioconductor & CRAN
 Packages or libraries built for R environment are available for download and use from multiple sources including R `CRAN`, `Bioconductor` or even directly from `Github`. The Comprehensive R Archive Network (`CRAN`) is the largest repository for R packages maintained by R developers, while `Bioconductor` is a community maintained (R core) repository (as well as a database for sample datasets) and specializes in packages/libraries with applications in biology. Submission to both of these repositories undergo strenuous review (including novelty of the package, code quality and testing) before it is accepted and becomes available for users to download and use. Packages from both of these resources once available can easily be downloaded from within R console environment. 
@@ -67,9 +70,18 @@ As previously explained that `Biocodunctor` is a database/repository for R packa
 
 These Experiment classes including `SummarizedExperiment` and `SingleCellExperiment` are designed in such a way as to allow the users to use the objects of these classes in a more biologically and statistically relevant manner especially considering the workflow of such datasets. For example, these classes allow storage of multiple `assays`, `colData`, `rowData` as well as other types of data such as dimensionality reduction results within the same object as all of these data types are used within an analysis workflow from the same experiment.
 
-Moreover, because these data-containers are specialized, they acquire multiple features necessary for such high-dimensional data such as use of `dgCMatrix` (compressed sparse matrices) for `assay` data, `dataframes` for `colData`/`rowData` and `SimpleList` for dimensionality reduction results, all of which have additional advantages instead of using a single base data-stucture for all types of data.
+Moreover, because these data-containers are specialized, they acquire multiple features necessary for such high-dimensional data such as use of `dgCMatrix` (compressed sparse matrices) for `assay` data, `dataframes` for `colData`/`rowData` and `SimpleList` for dimensionality reduction results, all of which have additional advantages instead of using a single base data-structure for all types of data.
 
 ### Use of Bioconductor Experiment objects
+Bioconductor Experiment objects refer to the R packages that are available through the Bioconductor repository for the users to use with their analyses, particularly the packages that offer classes which could be used as data-containers for the storage and manipulation of genetic data. The objects created from these classes offer a very convenient manner to store and manipulate and are particularly developed to handle the common datatypes that are needed for such data. Therefore, these Experiment classes are used extensively by other packages that allow the input, processing and output directly to and from these objects without having to extract the actual data matrices from these objects. 
+
+The standards set by these classes and the Bioconductor core development team ensure that new methods and packages developed by other developers and researchers use the same the input and output for consistency among the research community. This can be seen from the figure below that shows which packages on Bioconductor use one the main Experiment classes, i.e. SummarizedExperiment (shown in `Depends On me`):
+
+![](se1.png)
+
+![](se2.png)
+
+The package names shown in the `Depends On Me` heading show just some of the packages that are utilizing the SummarizedExperiment class and the corresponding infrastructure of input, processing and output of the Experiment classes. This not only shows the importance of Experiment classes but also highlights the need to improve upon these classes to add missing features or elements that may not have been considered at the time of the development of these classes.
 
 ## Background
 High-throughput experiments like microarrays and RNA sequencing allow simultaneous extraction of data from thousands of genes at the same time, thus enabling researchers and scientists to study the effects of mutations (change in gene structure) and expression changes (quantifying the presence or absence of a gene) in genes that result in phenotype variations [@Reuter2015]. These changes often help us in understanding the underlying causes of numerous diseases, particularly heterogeneous diseases such as cancer, where different cells may represent individual changes at the genetic level [@Haque2017]. 
@@ -552,80 +564,93 @@ To benchmark our package, we selected a number of datasets with varying degree o
 
 |Serial No.| Dataset | Dimensions | Sparsity | Type of Dataset |
 | -------- | ------- | ---------- | -------- | ---- |
-| 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real Dataset |
-| 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real Dataset |
-| 3 | BaronPancreasData('human') | 20125  8569 | 0.9062241 |Real Dataset |
-| 4 | BaronPancreasData('mouse') | 14878  1886 | 0.8897182 | Real Dataset |
-| 5 | KotliarovPBMCData | 32738 58654 | 0.9780209 | Real Dataset |
-| 6 | BuettnerESCData | 38293   288 | 0.7440639 | Real Dataset |
-| 7 | CampbellBrainData | 26774 21086 | 0.9279162 | Real Dataset |
-| 8 | Sample | 31535 13199 | 0.00012 |Sample filled with random values to remove sparseness |
-| 9 | Sample | 27998 25806 | 0.00012 | Sample filled with random values to remove sparseness |
-| 10 | Sample | 20125  8569 | 0.00012 | Sample filled with random values to remove sparseness |
-| 11 | Sample | 14878  1886 | 0.00012 | Sample filled with random values to remove sparseness |
-| 12 | Sample | 32738 58654 | 0.00012 | Sample filled with random values to remove sparseness |
-| 13 | Sample | 38293   288 | 0.00012 | Sample filled with random values to remove sparseness |
-| 14 | Sample | 26774 21086 | 0.00012 | Sample filled with random values to remove sparseness |
-| 15 | pbmc3k | 32738  2700 | 0.9741281 | Real dataset used for testing subset to 3k cells |
-| 16 | pbmc4k | 33694  4340 | 0.9608314 | Real dataset used for testing subset to 4k cells |
-| 17 | pbmc6k | 32738  5419 | 0.9771501 | Real dataset used for testing subset to 6k cells |
-| 18 | pbmc8k | 33694  8381 | 0.9582552 | Real dataset used for testing subset to 8k cells |
-| 19 | pbmc33k | 32738 33148 | 0.9766104 | Real dataset used for testing subset to 33k cells |
+| 1 | AztekinTailData | 31535 13199 | 0.9296133 | Real dataset |
+| 2 | BachMammaryData | 27998 25806 | 0.9152684 |Real dataset |
+| 3 | BaronPancreasData('human') | 20125  8569 | 0.9062241 |Real dataset |
+| 4 | BaronPancreasData('mouse') | 14878  1886 | 0.8897182 | Real dataset |
+| 5 | KotliarovPBMCData | 32738 58654 | 0.9780209 | Real dataset |
+| 6 | BuettnerESCData | 38293   288 | 0.7440639 | Real dataset |
+| 7 | CampbellBrainData | 26774 21086 | 0.9279162 | Real dataset |
+| 8 | Random 31k x 13k  | 31535 13199 | 0.00012 | Dense dataset filled with random values |
+| 9 | Random 28k x 25k | 27998 25806 | 0.00012 | Dense dataset filled with random values |
+| 10 | Random 20k x 8k | 20125  8569 | 0.00012 | Dense dataset filled with random values |
+| 11 | Random 15k x 2k | 14878  1886 | 0.00012 | Dense dataset filled with random values |
+| 12 | Random 33k x 59k | 32738 58654 | 0.00012 | Dense dataset filled with random values |
+| 13 | Random 38k x 0.3k | 38293   288 | 0.00012 | Dense dataset filled with random values |
+| 14 | Random 27k x 21k | 26774 21086 | 0.00012 | Dense dataset filled with random values |
+| 15 | pbmc3k | 32738  2700 | 0.9741281 | Standard dataset (3k cells) |
+| 16 | pbmc4k | 33694  4340 | 0.9608314 | Standard dataset (4k cells) |
+| 17 | pbmc6k | 32738  5419 | 0.9771501 | Standard dataset (6k cells) |
+| 18 | pbmc8k | 33694  8381 | 0.9582552 | Standard dataset (8k cells) |
+| 19 | pbmc33k | 32738 33148 | 0.9766104 | Standard dataset (33k cells) |
 
 ### Approach 1: dgCMatrix
 `dgCMatrix` is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix. This approach is by default used with all `Experiment` classes for storage and manipulation of matrices within the objects apart from some other more efficient approaches such as `hdf5` and `tileDB` that have recently become popular. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
 
 |Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
 |----------|-------|----------|----------------|--------|---|--|-------|
-|1|AztekinTailData|31535 13199|13434.67|0.9296133|1.28 GB|650 MB|49.22|
-|2|BachMammaryData|27998 25806|8239.648|0.9152684|2.23 GB|1.16 GB|47.98|
-|3|BaronPancreasData('human')|20125  8569|5828.225|0.9062241|718 MB|364 MB|49.3|
-|4|BaronPancreasData('mouse')|14878  1886|4990.086|0.8897182|137 MB|73.5 MB|46.35|
-|5|KotliarovPBMCData|32738 58654|	2065.245|	0.9780209|	1.92 GB|	1.04 GB|	45.83|
-|6|BuettnerESCData|38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|
-|7|CampbellBrainData|26774 21086|	4024.644|	0.9279162|	1.71 GB	|992 MB|	41.99|
-|8|Sample sparse dataset  (1)|31535 13199|	283814.4|	0.000123194|	17 GB|	8.33 GB|	51|
-|9|Sample sparse dataset  (2)|27998 25806|	251977.7|	0.000123218|	29.5 GB|	14.5 GB|	50.85|
-|10|Sample sparse dataset  (3)|20125  8569|	181130.1|	0.000123687|	7.11 GB|	3.45 GB|	51.48|
-|11|Sample sparse dataset  (4)|14878  1886|	133908.9|	0.000124662|	1.17 GB|	563 MB|	51.88|
-|12|Sample sparse dataset  (5)|32738 58654|	294641.4|	0.000123562|	78.3 GB|	38.4 GB|	50.96|
-|13|Sample sparse dataset  (6)|38293   288|	344673.6|	0.000125404|	454 MB|	224 MB|	50.66|
-|14|Sample sparse dataset  (7)|26774 21086|	240964.1|	0.000123049|	23.1 GB|	11.3 GB|	51.08|
-|15|pbmc3k|32738  2700|2366.9|	0.9741281|	16.3 MB|	7.16 MB|	56.07|	
-|16|pbmc4k|33694  4340|4349.038|	0.9608314|	19.1 MB|	8.08 MB|	57.7|
-|17|pbmc6k|32738  5419|2027.635|	0.9771501|	18.5 MB|	8.37 MB|	54.76|
-|18|pbmc8k|33694  8381|4639.048|	0.9582552|	24 MB|	9.93 MB|	58.63|
-|19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97|
+|1|AztekinTailData|31535 13199|13434.67|0.9296133|1280 MB|650 MB|49.22%|
+|2|BachMammaryData|27998 25806|8239.648|0.9152684|2230 MB|1.16 MB|47.98%|
+|3|BaronPancreasData('human')|20125  8569|5828.225|0.9062241|718 MB|364 MB|49.3%|
+|4|BaronPancreasData('mouse')|14878  1886|4990.086|0.8897182|137 MB|73.5 MB|46.35%|
+|5|KotliarovPBMCData|32738 58654|	2065.245|	0.9780209|	1920 MB|	1040 MB|	45.83%|
+|6|BuettnerESCData|38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39%|
+|7|CampbellBrainData|26774 21086|	4024.644|	0.9279162|	1710 MB	|992 MB|	41.99%|
+|8|Random 31k x 13k|31535 13199|	283814.4|	0.000123194|	17000 MB|	8330 MB|	51%|
+|9|Random 28k x 25k|27998 25806|	251977.7|	0.000123218|	29500 MB|	14500 MB|	50.85%|
+|10|Random 20k x 8k|20125  8569|	181130.1|	0.000123687|	7110 MB|	3450 MB|	51.48%|
+|11|Random 15k x 2k|14878  1886|	133908.9|	0.000124662|	1170 MB|	563 MB|	51.88%|
+|12|Random 33k x 59k|32738 58654|	294641.4|	0.000123562|	78300 MB|	38400 MB|	50.96%|
+|13|Random 38k x 0.3k|38293   288|	344673.6|	0.000125404|	454 MB|	224 MB|	50.66%|
+|14|Random 27k x 21k|26774 21086|	240964.1|	0.000123049|	23100 MB|	11300 MB|	51.08%|
+|15|pbmc3k|32738  2700|2366.9|	0.9741281|	16.3 MB|	7.16 MB|	56.07%|	
+|16|pbmc4k|33694  4340|4349.038|	0.9608314|	19.1 MB|	8.08 MB|	57.7%|
+|17|pbmc6k|32738  5419|2027.635|	0.9771501|	18.5 MB|	8.37 MB|	54.76%|
+|18|pbmc8k|33694  8381|4639.048|	0.9582552|	24 MB|	9.93 MB|	58.63%|
+|19|pbmc33k|32738 33148|2057.882|	0.9766104|	43.8 MB|	20.6 MB|	52.97%|
 
 ### Approach 2: Matrix
 `Matrix` is the standard form of 2D matrices in R and is the non-compressed form of matrices as compared to the `dgCMatrix`. While this is not the default way to store matrices in `Experiment` classes, in many methods the `dgcMatrix` matrix form is indeed converted to this standard form for manipulation and processing and it is therefore important to consider this case as well. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
 
 |Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
 |----------|-------|----------|----------------|--------|---|--|-------|
-|1|	AztekinTailData|	31535 13199|	13434.67|	0.9296133|	10.2 GB|	4.67 GB|	54.22|
-|2|	BachMammaryData| 27998 25806|	8239.648|	0.9152684|	17.8 GB|	8.11 GB|	54.44|
-|3|	BaronPancreasData('human')|	20125  8569|	5828.225|	0.9062241|	4.28 GB|	1.94 GB|	54.67|
-|4|	BaronPancreasData('mouse')|	14878  1886|	4990.086|	0.8897182|	681 MB|	317 MB|	53.45|
-|5|	KotliarovPBMCData|	32738 58654|	2065.245|	0.9780209|	39 GB|	21.6 GB|	44.62|
-|6|	BuettnerESCData|	38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39|
-|7|	CampbellBrainData|	26774 21086|	4024.644|	0.9279162|	12.6 GB|	6.33 GB|	49.76|
-|8|	Sample sparse dataset  (1)|	31535 13199|	283814.4|	0.000123194|	6.83 GB|	3 GB|	56.08|
-|9|	Sample sparse dataset  (2)|	27998 25806|	251977.7|	0.000123218|	11.9 GB|	5.21 GB|	56.22|
-|10|	Sample sparse dataset  (3)|	20125  8569|	181130.1|	0.000123687|	2.87 GB|	1.25 GB|	56.45|
-|11|	Sample sparse dataset  (4)|	14878  1886|	133908.9|	0.000124662|	475 MB|	204 MB	|57.05|
-|12|	Sample sparse dataset  (5)|	32738 58654|	294641.4|	0.000123562|	31.5 GB|	13.8 GB|	56.19|
-|13|	Sample sparse dataset  (6)|	38293   288|	344673.6|	0.000125404|	186 MB|	83.1 MB|	55.32|
-|14|	Sample sparse dataset  (7)|	26774 21086|	240964.1|	0.000123049|	9.3 GB|	4.07 GB|	56.24|
-|15|	pbmc3k|	32738  2700|	2366.9|	0.9741281|	1.29 GB|	644 MB|	50.08|
-|16|	pbmc4k|	33694  4340|	4349.038|	0.9608314|	2.39 GB|	1.06 GB|	55.65|
-|17|	pbmc6k|	32738  5419|	2027.635|	0.9771501|	2.31 GB|	1.29 GB|	44.16|
-|18|	pbmc8k|	33694  8381|	4639.048|	0.9582552|	4.63 GB|	2.04 GB|	55.94|
-|19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	14.2 GB|	7.83 GB|	44.86|
+|1|	AztekinTailData|	31535 13199|	13434.67|	0.9296133|	10200 MB|	4670 MB|	54.22%|
+|2|	BachMammaryData| 27998 25806|	8239.648|	0.9152684|	17800 MB|	8110 MB|	54.44%|
+|3|	BaronPancreasData('human')|	20125  8569|	5828.225|	0.9062241|	4280 MB|	1940 MB|	54.67%|
+|4|	BaronPancreasData('mouse')|	14878  1886|	4990.086|	0.8897182|	681 MB|	317 MB|	53.45%|
+|5|	KotliarovPBMCData|	32738 58654|	2065.245|	0.9780209|	39000 MB|	21600 MB|	44.62%|
+|6|	BuettnerESCData|	38293   288|	2767864|	0.7440639|	204 MB|	91 MB|	55.39%|
+|7|	CampbellBrainData|	26774 21086|	4024.644|	0.9279162|	12600 MB|	6330 MB|	49.76%|
+|8|Random 31k x 13k|	31535 13199|	283814.4|	0.000123194|	6830 MB|	3000 MB|	56.08%|
+|9|Random 28k x 25k|	27998 25806|	251977.7|	0.000123218|	11900 MB|	5210 MB|	56.22%|
+|10|Random 20k x 8k|	20125  8569|	181130.1|	0.000123687|	2870 MB|	1250 MB|	56.45%|
+|11|Random 15k x 2k|	14878  1886|	133908.9|	0.000124662|	475 MB|	204 MB	|57.05%|
+|12|Random 33k x 59k|	32738 58654|	294641.4|	0.000123562|	31500 MB|	13800 MB|	56.19%|
+|13|Random 38k x 0.3k|	38293   288|	344673.6|	0.000125404|	186 MB|	83.1 MB|	55.32%|
+|14|Random 27k x 21k|	26774 21086|	240964.1|	0.000123049|	9300 MB|	4070 MB|	56.24%|
+|15|	pbmc3k|	32738  2700|	2366.9|	0.9741281|	1290 MB|	644 MB|	50.08%|
+|16|	pbmc4k|	33694  4340|	4349.038|	0.9608314|	2390 MB|	1060 MB|	55.65%|
+|17|	pbmc6k|	32738  5419|	2027.635|	0.9771501|	2310 MB|	1290 MB|	44.16%|
+|18|	pbmc8k|	33694  8381|	4639.048|	0.9582552|	4630 MB|	2040 MB|	55.94%|
+|19|	pbmc33k|	32738 33148|	2057.882|	0.9766104|	1420 MB|	7830 MB|	44.86%|
 
 ### Benchmarking Results
 In both approach 1 and 2, we compare the size (memory occupied) by the resultant objects and illustrate the memory savings with the figure below. The grey and yellow lines that stretch across the x-axis represent the savings in each of dataset (x-axis labels) using the first and the second approach. It is evident that using the `ExperimentSubset` package offers significant memory savings as compared to using other `Experiment` classes where one has to use multiple objects in the case of subsets. However, sparsity and the average counts in each dataset do play a minor role in shaping the overall savings in an object. This pattern can be observed by the smooth line in the middle of the figure below that corresponds to the randomly populated sample datasets with zero sparsity and similar average counts.
 
-![](results.png)
+![](results1.png)
+
+The figure above highlights the memory savings offered by the ExperimentSubset data-container compared to the most widely used data-containers i.e. SingleCellExperiment, when run through the same analysis workflow described earlier using the standard PBMC datasets (3K, 4K, 6K, 8K and 33K cells/samples). It is evident from the figure that ExperimentSubset not only conserves almost half of the memory (shown in the y-axis as megabytes of memory saved) but additionally only uses a single object instead of the three objects when compared to the SingleCellExperiment data-container. 
+
+
+![](results2.png)
+
+The figure above highlights the memory savings offered by the ExperimentSubset data-container using some of the real datasets contributed by different authors and curated by the `scRNAseq` R package.
+
+![](results3.png)
+
+The figure above highlights the memory savings offered by the ExperimentSubset data-container using self-contributed random datasets that have the same dimensions as the previously used real datasets but are not filled with random values to make sure that it is no longer sparse and all data cells are filled with random values. One of the major reasons of testing these random datasets is to ensure that when the data-container is used with datasets (possiblye bulk-RNA seq datasets that have very little sparsity), the memory savings are still consistent.
+
+From all of the figures above, the memory savings in terms of object sizes (current occupied memory) are quite evident with ExperimentSubset package saving almost half of the additional memory when compared with SingleCellExperiment data-container. Although the figures shown above represent the memory savings offered using the approach 1 where we used the dgCMatrix (a matrix that specializes in storing sparse data), we computed results with the standard R matrix as well and obtained similar memory savings which are shown in the table but not visualized.
 
 ## Provenance Tracking
 One of the issues in typical scRNA-Seq workflows is the tracking of data between different forms, shapes, sizes and structures when it undergoes manipulation in different processes in an analysis workflow. In the sample analysis workflow described above, the original input data undergoes manipulation through different methods and to ensure that data in different forms are related/connected to each other, we implemented a mechanism within our package for this purpose in all of our structural functions. For users, we offer the use of `subsetSummary` function to display the current form and structure of the data at any given point in an analysis workflow. 
