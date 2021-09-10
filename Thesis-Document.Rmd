@@ -241,7 +241,7 @@ The overall research methodology for this study includes the package design (hig
 
 ![](method_top.png)
 
-## Package Design
+## Design logical structure of subsets & their storage
 Keeping in view the objectives and scope of the package, an abstract logical design of the package (in regards to other `Experiment` classes) is illustrated in the figure below with specific importance on the creation and manipulation of different types of subsets.
 
 ![](design.png)
@@ -252,11 +252,19 @@ The goal of the package is to provide the ability to create subsets from availab
 
 The figure above shows the general internal proposed structure of the class object, where the overall object can have multiple main assays (inherited from the parent `Experiment` class) and in addition to these assays, it should be able to store subsets and subset specific data. Subset-specific information includes the name of the subset which is used to identify the subset, row/column indices which are used to fetch the data directly from a main assay and therefore would help in memory savings, name of the parent assay which helps in both fetching the data as well as helps in maintaining data provenance. Additionally, subset-specific experiment data is stored in an empty `Experiment` object which should be the same as the parent object to avoid maintenance and compatibility issues.
 
+## Identify & handle data redundancy issues in the design
+One of the issues currently both with the existing Experiment classes and the subsets is the handling of data redundancy which ultimately leads to increased memory consumption. As the typical datasets used with these Experiment classes are generally quite large (in the order of atleast gigabytes), memory consumption is definitely a troublesome that must be handled in an efficient way. With the existing Experiment classes you have to create additional objects and therefore there isn't really a way to save memory in terms of object sizes.
+
+![](indices.png)
+
+In our proposed approach, we use indices to store subsets instead of storing the actual values and use these indices as pointers to reference the actual data. This approach allows us to eliminate the storage of redundant data values since they are already stored in another data matrix. While the approach itself is slightly complicated due to the hierarchical linking of the subsets and the consequent hierarchical structure of the pointers, however, memory savings offered as a result of this approach would be significant. For example in the figure shown above, if we consider that the values shown constitute a complete matrix and we wish to create a subset highlighted by the values included in the red rectangles, we only store the row indices and the column indices and use these indices to refer the actual values. More details on we have actually implemented this is available in the "Internal class AssaySubset" section below.
+
+## Integration of existing Experiment classes
 ![](class_diagram.png)
 
 The figure above represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
 
-## Package Implementation
+## Implement new classes with subset support
 The R programming language supports multiple types of object-oriented class systems including `S3`, `S4`, `R5` and `R6`. For the implementation of the said package, we use the `S4` class system because of the following two reasons:
 
 1. `S4` class system is more OOP oriented (although R6 perfectly mimics standard OOP) than other classes, where you can have setter/getter methods with a single generic function.
@@ -318,7 +326,7 @@ print(class(es@subsets$subset1))
 print(es@subsets$subset1)
 ```
 
-### Implement subset manipulation methods
+## Implement new methods for creation & manipulation of subsets
 1. `createSubset()` method is implemented for the creation of a subset. The input to this method is an `ExperimentSubset` object and specific parameters that specify the subset name, row/column indices of the parent assay and the name of the parent assay to which this subset belongs. The result of using this function is the creation of a new `AssaySubset` class object that stores the information of the new subset which is ultimately stored as an element in the input `ExperimentSubset` object.
 2. `getSubsetAssay()` and `setSubsetAssay()` methods are implemented to get or set an assay specifically to a subset. `S4` method approach is not used here since both getter and setter methods work differently and require different number of arguments.
 3. `subsetColData()` `S4` method is implemented that allows setting and getting of `colData` specifically from/to a subset.
@@ -337,7 +345,7 @@ print(es@subsets$subset1)
 16.	`subsetRowLinks()` method from `TreeSummarizedExperiment` class to get or set `rowLinks` to specifically a subset.
 17.	`subsetColLinks()` method from `TreeSummarizedExperiment` class to get or set `colLinks` to specifically a subset.
 
-### Override methods
+## Override existing methods by adding subset support to them
 1.	To support subset capability with existing methods from all `Experiment` classes, we override these methods and add subset support to them made possible by use of direct inheritance from these classes.
 2.	For methods that exist with multiple classes, we create a single function and then call this function in the generic function of each of the class method to minimize the code redundancy and to increase code reusability.
 3.	The methods inherited from the `Experiment` classes to which subset support have been added through the strategy described above are specified below:
@@ -401,7 +409,7 @@ The `rowLinks` accessor method retrieves the information of the rows linked with
 
 The `colLinks` accessor method retrieves the information of the columns linked with the col tree in the `TreeSummarizedExperiment` class. Here we have added support for subsets using the `subsetName` parameter which lets us retrieve the `colLinks` for just a particular subset as long as the object is inherited from the same parent class.
 
-
+## Create documentation & add unit tests
 ### Document package
 R packages are generally documented in two standard ways, one through `roxygen2` package that creates a documentation page for each function or method and secondly through a package vignette which is more of a user guide. Following both of these standards, we used the `roxygen2` R package to create documentation (`Rd` files) for each of the function/method in our package that describes the function/method name, short description, input/output of the function/method and a runnable example to show the working of the function/method. These `Rd` files generated by `roxygen2` then become available online repositories for users to view such as the [rddr](rddr.io). 
 
@@ -411,6 +419,21 @@ Additionally, to document the usage of the package, we used `Rmarkdown` to creat
 To ensure the correctness of the our package throughout its development and post-development life-cycle, we make use of unit testing through the R `testthat` package to test our package in small units, particularly each function and method in our package. We particularly use unit-testing because the github `travis` build allows us to automatically run the unit tests for each commit/update and ensures that with each update none of the functionality breaks. For each function or method that we have either created or overrided from the other `Experiment` classes, we specify a set of input and outputs and test these at each iteration of the development life-cycle and later with the updates and ensure that the output returned by these functions are exactly the ones that are expected with the functionality. 
 
 The `testthat` package allows us to specify all unit tests within a single `testthat.R` file with their corresponding inputs and the expected outputs.
+
+## Validate package
+To validate that the package and the subset classes that we have created by inheriting from the existing Experiment classes do actually store and retrieve the same data as they would without using our subset classes, we create subsets and inspect the data that is available through our package and compare it with the existing Experiment classes. For this validation, we follow the workflow given below:
+
+1. Import a sample dataset in the form of a `SingleCellExperiment` object.
+2. Convert this `SingleCellExperiment` object into `ExperimentSubset` (our package) object.
+3. Create a subset with a selected number of rows/columns with our package and create a new object for the `SingleCellExperiment` class with the same rows/columns.
+4. Inspect data through both the newly created subset in `ExperimentSubset` object and the additional `SingleCellExperiment` object.
+5. Run a normalization algorithm on just the subset rows/columns and inspect the normalized data through both the approaches.
+6. Run a dimensionality reduction algorithm on just the subset rows/columns and inspect the `reducedDim` data through both approaches.
+
+The steps 4, 5 & 6 are can be used to validate the package by ensuring the the data stored, computed and manipulated through our package (`ExperimentSubset`) and the other Experiment package (`SingleCellExperiment`) are actually the same with no loss of information with our design of the package. The validation and the output from this workflow is further discussed in detail in the "Validation" sub-section of the "Results & Discussion" section of the document. 
+
+## Performance comparison with existing Experiment classes
+To ensure that our package is actually efficient when compared to the existing state of the art Experiment packages, we run a performance comparison using a sample workflow and then measuring the package efficiency in terms of memory savings that are offered by our package in comparison to the other packages. The sample workflow and the results obtained are discussed in detail in the "Results & Discussion" section of the document. 
 
 # Results & Discussion
 The `ExperimentSubset` R package was developed based on the implementation specified in the 'Methods' section of this document. To compare the memory savings offered by our package in contrast to other data structure packages such as the `SingleCellExperiment`, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow.
@@ -517,7 +540,7 @@ The sample analysis described above creates multiple subsets and as can be seen 
 #################################
 
 #Load PBMC4K dataset and create ExperimentSubset object:
-sce <- TENxPBMCData(dataset = "pbmc4k")
+sce <- TENxPBMCData(dataset = "pbmc3k")
 es <- ExperimentSubset(sce)
 
 #Compute perCellQCMetrics on counts matrix:
@@ -663,6 +686,72 @@ es <- readRDS("es.rds")
 subsetSummary(es)
 ```
 
+## Validation
+
+```{r, warning=FALSE}
+#Load PBMC4K dataset and create ExperimentSubset object:
+#Load PBMC4K dataset
+sce1 <- TENxPBMCData(dataset = "pbmc3k")
+print(sum(assay(sce1, "counts")))
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- scater::perCellQCMetrics(assay(sce1, "counts"))
+colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new object:
+sce1 <- sce1[, order(-sce1@colData$sum)]
+print(sce1@colData$sum[1:10])
+sce2 <- sce1[,1:round(ncol(sce1) * 0.40)]
+
+#Normalize sce2 using scater library and store it back:
+assay(sce2, "filteredCellsNormalized") <- scater::normalizeCounts(assay(sce2, "counts"))
+print(sum(assay(sce2, "filteredCellsNormalized")))
+
+#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
+topHVG1000 <- scran::getTopHVGs(scran::modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+sce3 <- sce2[topHVG1000,]
+print(topHVG1000[1:10])
+
+print(sum(assay(sce3, "filteredCellsNormalized")))
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
+reducedDim(sce3, type = "PCA") <- scater::calculatePCA(assay(sce3, "filteredCellsNormalized"))
+print(reducedDim(sce3, type = "PCA")[1:4, 1:4])
+
+
+
+#################################################
+
+#Load PBMC4K dataset and create ExperimentSubset object:
+sce <- TENxPBMCData(dataset = "pbmc3k")
+es <- ExperimentSubset(sce)
+print(sum(assay(es, "counts")))
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- scater::perCellQCMetrics(assay(es, "counts"))
+colData(es) <- cbind(colData(es), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new subset called ‘filteredCells’:
+es <- es[, order(-es@colData$sum)]
+print(es@colData$sum[1:10])
+es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
+
+#Normalize ‘filteredCells’ subset using scater library and store it back:
+es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", scater::normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
+
+
+#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
+topHVG1000 <- scran::getTopHVGs(scran::modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
+print(topHVG1000[1:10])
+print(sum(assay(es, "hvg1000")))
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
+reducedDim(es, type = "PCA", subsetName = "hvg1000") <- scater::calculatePCA(assay(es, "hvg1000"))
+print(reducedDim(es, type = "PCA", subsetName = "hvg1000")[1:4, 1:4])
+
+```
+
+As evident from the workflow output above, the data stored, manipulated and output for a particular input data is same throughout the workflow either using the `SingleCellExperiment` object or our `ExperimentSubset` object which validates our package.
 
 # Conclusion, limitations, future work & availability
 
