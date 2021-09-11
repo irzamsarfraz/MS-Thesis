@@ -237,12 +237,12 @@ As evident, a single experiment constitutes a single CellDataSet object with a s
 
 
 # Research Methodology
-The overall research methodology for this study includes the package design (high-level logical design to support subsets in existing `Experiment` packages), package implementation (development and deployment of package in R environment, including package documentation) and the validation of the efficiency of the package on different datasets (results). The research methodology can be perceived easily from the Figure.
+The overall research methodology for this project (as a development project) includes a number of steps, starting from the high-level design of the class and how the subsets should work, handling of data redundancy issues in the design of the package, making sure that package could be used as a drop-in replacement by working towards integration of the existing Experiment classes and finally implementing the said subset classes within the umbrella of an R package, followed by package documentation, validation and performance comparison. The figure describes our followed methodology in brief starting from package design to package implementation.
 
 ![](method_top.png)
 
 ## Design logical structure of subsets & their storage
-Keeping in view the objectives and scope of the package, an abstract logical design of the package (in regards to other `Experiment` classes) is illustrated in the figure below with specific importance on the creation and manipulation of different types of subsets.
+Keeping in view the objectives and scope of the package, an abstract logical design and structure of the package (in regards to other `Experiment` classes) is illustrated in the figure with specific importance on the creation and manipulation of different types of subsets.
 
 ![](design.png)
 
@@ -260,9 +260,11 @@ One of the issues currently both with the existing Experiment classes and the su
 In our proposed approach, we use indices to store subsets instead of storing the actual values and use these indices as pointers to reference the actual data. This approach allows us to eliminate the storage of redundant data values since they are already stored in another data matrix. While the approach itself is slightly complicated due to the hierarchical linking of the subsets and the consequent hierarchical structure of the pointers, however, memory savings offered as a result of this approach would be significant. For example in the figure shown above, if we consider that the values shown constitute a complete matrix and we wish to create a subset highlighted by the values included in the red rectangles, we only store the row indices and the column indices and use these indices to refer the actual values. More details on we have actually implemented this is available in the "Internal class AssaySubset" section below.
 
 ## Integration of existing Experiment classes
+To ensure that our proposed package/classes work as drop-in replacement (existing functions would not need to be changed in other packages and libraries) against other commonly used Experiment classes, we decided to opt for the integration of these classes in such a way that our package and the subset classes within our package could be used directly with existing methods and functions that use the currently available Experiment classes. For this purpose, we decided to directly inherit from these classes and add subset support (slot) to them and provide the capability to create and manipulate subsets in a fashion similar to existing classes.  
+
 ![](class_diagram.png)
 
-The figure above represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
+The figure represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
 
 ## Implement new classes with subset support
 The R programming language supports multiple types of object-oriented class systems including `S3`, `S4`, `R5` and `R6`. For the implementation of the said package, we use the `S4` class system because of the following two reasons:
@@ -327,6 +329,8 @@ print(es@subsets$subset1)
 ```
 
 ## Implement new methods for creation & manipulation of subsets
+For the creation and manipulation of subsets with our package and the subset classes, we create and implement a number of functions and methods which are listed below along with their description:
+
 1. `createSubset()` method is implemented for the creation of a subset. The input to this method is an `ExperimentSubset` object and specific parameters that specify the subset name, row/column indices of the parent assay and the name of the parent assay to which this subset belongs. The result of using this function is the creation of a new `AssaySubset` class object that stores the information of the new subset which is ultimately stored as an element in the input `ExperimentSubset` object.
 2. `getSubsetAssay()` and `setSubsetAssay()` methods are implemented to get or set an assay specifically to a subset. `S4` method approach is not used here since both getter and setter methods work differently and require different number of arguments.
 3. `subsetColData()` `S4` method is implemented that allows setting and getting of `colData` specifically from/to a subset.
@@ -346,9 +350,12 @@ print(es@subsets$subset1)
 17.	`subsetColLinks()` method from `TreeSummarizedExperiment` class to get or set `colLinks` to specifically a subset.
 
 ## Override existing methods by adding subset support to them
+To ensure that the subsets can be accessed and updated through the methods available from the existing classes, we override these methods and add subset support to them. 
+
 1.	To support subset capability with existing methods from all `Experiment` classes, we override these methods and add subset support to them made possible by use of direct inheritance from these classes.
 2.	For methods that exist with multiple classes, we create a single function and then call this function in the generic function of each of the class method to minimize the code redundancy and to increase code reusability.
 3.	The methods inherited from the `Experiment` classes to which subset support have been added through the strategy described above are specified below:
+
 - `show()` 
 
 The `show()` is a base R (`methods` class) function that prints the object summary, visualizes a plot or prints other necessary information which is suitable for that particular class of objects. Here, we override the `show()` function and mimic the output of other `Experiment` classes but additionally add printing of subsets and subset assays for easier understanding of the current object structure. 
@@ -503,73 +510,7 @@ As the overall purpose of the package is to conserve memory and provide provenan
 - Dimensionality reduction (PCA) is performed on these top variable genes using the normalized assay and the computed results are stored back into the object. 
 - Kmeans clustering is performed on the dimensionality reduction results computed on the top 1000 variable genes and the cluster labels are stored back into the object.
 
-An R script that can be used to compute the analysis above with a `SingleCellExperiment`object is given below:
-
-```{r, eval = FALSE}
-#Load PBMC4K dataset
-sce1 <- TENxPBMCData(dataset = "pbmc3k")
-
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- perCellQCMetrics(assay(sce1, "counts"))
-colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new object:
-sce1 <- sce1[, order(-sce1@colData$sum)]
-sce2 <- sce1[,1:round(ncol(es) * 0.40)]
-
-#Normalize sce2 using scater library and store it back:
-assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
-
-#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
-topHVG1000 <- getTopHVGs(modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
-sce3 <- sce2[topHVG1000,]
-
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
-reducedDim(sce3, type = "PCA") <- calculatePCA(assay(sce3, "filteredCellsNormalized"))
-
-#Find clusters from reducedDims of highly variable genes and store the results back into colData
-clusterPC = kmeans(reducedDim(sce3, "PCA"), 5)$cluster
-colData(sce3) <- cbind(colData(sce3), clusterPC)
-```
-
-The sample analysis described above creates multiple subsets and as can be seen that **3** `SingleCellExperiments` objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using `ExperimentSubset` below:
-
-```{r, eval = FALSE}
-#################################
-#     Use ExperimentSubset      #
-#################################
-
-#Load PBMC4K dataset and create ExperimentSubset object:
-sce <- TENxPBMCData(dataset = "pbmc3k")
-es <- ExperimentSubset(sce)
-
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
-colData(es) <- cbind(colData(es), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new subset called ‘filteredCells’:
-es <- es[, order(-es@colData$sum)]
-es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
-
-#Normalize ‘filteredCells’ subset using scater library and store it back:
-es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
-
-#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
-topHVG1000 <- getTopHVGs(modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
-es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
-
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
-reducedDim(es, type = "PCA", subsetName = "hvg1000") <- calculatePCA(assay(es, "hvg1000"))
-
-#Find clusters from reducedDims of highly variable genes and store the results back into colData of subset
-clusterPC = kmeans(reducedDim(es, "PCA", subsetName = "hvg1000"), 5)$cluster
-colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000"), clusterPC)
-
-#Show the current condition of the ExperimentSubset object:
-subsetSummary(es)
-```
-
-As explicitly evident from the R scripts above, to run the workflow we use a **single** `ExperimentSubset` object in contrast to **3** `SingleCellExperiment` objects for the same analysis. 
+An R script that can be used to compute the analysis above with a `SingleCellExperiment` class and with our `ExperimentSubset` package is available in Appendix A. The sample analysis described above creates multiple subsets and as can be seen that **3** `SingleCellExperiments` objects are required to complete the analysis, therefore adding to the redundancy of the data. As explicitly evident from the R scripts (Appendix A), to run the workflow we use a **single** `ExperimentSubset` object in contrast to **3** `SingleCellExperiment` objects for the same analysis.
 
 ## Supported Classes
 - `SummarizedExperiment`
@@ -687,71 +628,54 @@ subsetSummary(es)
 ```
 
 ## Validation
+To validate that the data stored and manipulated through the use of our package `ExperimentSubset` in the form of subsets and through `SingleCellExperiment` package is same throughout the analysis workflow, we match the output from both packages. The analysis workflow used in described in the section 4.2 of this document and the complete script is available in Appendix A of this document. For displaying the output here, we saved the objects during the workflow and reload them to show the output:
 
 ```{r, warning=FALSE}
-#Load PBMC4K dataset and create ExperimentSubset object:
-#Load PBMC4K dataset
-sce1 <- TENxPBMCData(dataset = "pbmc3k")
+# SingleCellExperiment
+sce1 <- readRDS("sce1Validation.rds")
+sce2 <- readRDS("sce2Validation.rds")
+sce3 <- readRDS("sce3Validation.rds")
+topHVG1000SCE <- scran::getTopHVGs(scran::modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+
+# ExperimentSubset
+es <- readRDS("esValidation.rds")
+topHVG1000ES <- scran::getTopHVGs(scran::modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+
+# SingleCellExperiment
 print(sum(assay(sce1, "counts")))
-
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- scater::perCellQCMetrics(assay(sce1, "counts"))
-colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new object:
-sce1 <- sce1[, order(-sce1@colData$sum)]
-print(sce1@colData$sum[1:10])
-sce2 <- sce1[,1:round(ncol(sce1) * 0.40)]
-
-#Normalize sce2 using scater library and store it back:
-assay(sce2, "filteredCellsNormalized") <- scater::normalizeCounts(assay(sce2, "counts"))
-print(sum(assay(sce2, "filteredCellsNormalized")))
-
-#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
-topHVG1000 <- scran::getTopHVGs(scran::modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
-sce3 <- sce2[topHVG1000,]
-print(topHVG1000[1:10])
-
-print(sum(assay(sce3, "filteredCellsNormalized")))
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
-reducedDim(sce3, type = "PCA") <- scater::calculatePCA(assay(sce3, "filteredCellsNormalized"))
-print(reducedDim(sce3, type = "PCA")[1:4, 1:4])
-
-
-
-#################################################
-
-#Load PBMC4K dataset and create ExperimentSubset object:
-sce <- TENxPBMCData(dataset = "pbmc3k")
-es <- ExperimentSubset(sce)
+# ExperimentSubset
 print(sum(assay(es, "counts")))
 
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- scater::perCellQCMetrics(assay(es, "counts"))
-colData(es) <- cbind(colData(es), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new subset called ‘filteredCells’:
-es <- es[, order(-es@colData$sum)]
+# SingleCellExperiment
+print(sce1@colData$sum[1:10])
+# ExperimentSubset
 print(es@colData$sum[1:10])
-es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
 
-#Normalize ‘filteredCells’ subset using scater library and store it back:
-es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", scater::normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
+# SingleCellExperiment
+print(topHVG1000SCE[1:10])
+# ExperimentSubset
+print(topHVG1000ES[1:10])
 
-
-#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
-topHVG1000 <- scran::getTopHVGs(scran::modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
-es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
-print(topHVG1000[1:10])
+# SingleCellExperiment
+print(sum(assay(sce3, "filteredCellsNormalized")))
+# ExperimentSubset
 print(sum(assay(es, "hvg1000")))
 
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
-reducedDim(es, type = "PCA", subsetName = "hvg1000") <- scater::calculatePCA(assay(es, "hvg1000"))
-print(reducedDim(es, type = "PCA", subsetName = "hvg1000")[1:4, 1:4])
+# SingleCellExperiment
+print(abs(reducedDim(sce3, type = "PCA")[1:4, 1:4]))
+# ExperimentSubset
+print(abs(reducedDim(es, type = "PCA", subsetName = "hvg1000")[1:4, 1:4]))
 
+# Printing objects
+# SingleCellExperiment
+print(sce1)
+print(sce2)
+print(sce3)
+# ExperimentSubset
+print(es)
 ```
 
-As evident from the workflow output above, the data stored, manipulated and output for a particular input data is same throughout the workflow either using the `SingleCellExperiment` object or our `ExperimentSubset` object which validates our package.
+As evident from the workflow output above, the data stored, manipulated and output for a particular input data is same throughout the workflow either using the `SingleCellExperiment` object or our `ExperimentSubset` object which validates our package. Additionally, the outputs from these objects (3 objects for `SingleCellExperiment` and 1 for `ExperimentSubset`) are displayed that essentially contain the same data, although `ExperimentSubset` contains data in the form of references instead of storing additional data where not required. 
 
 # Conclusion, limitations, future work & availability
 
@@ -774,3 +698,75 @@ The implemented `ExperimentSubset` R package is available on both `Bioconductor`
 [https://github.com/campbio/ExperimentSubset](https://github.com/campbio/ExperimentSubset)
 
 # References {-}
+
+<div id="refs"></div>
+
+# Appendix {-}
+## Appendix A {-}
+### R Script to Run Sample Workflow for Performance Comparison {-}
+
+For `SingleCellExperiment`:
+
+```{r, eval = FALSE}
+#Load PBMC4K dataset
+sce1 <- TENxPBMCData(dataset = "pbmc3k")
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- perCellQCMetrics(assay(sce1, "counts"))
+colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new object:
+sce1 <- sce1[, order(-sce1@colData$sum)]
+sce2 <- sce1[,1:round(ncol(es) * 0.40)]
+
+#Normalize sce2 using scater library and store it back:
+assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
+
+#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
+topHVG1000 <- getTopHVGs(modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+sce3 <- sce2[topHVG1000,]
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
+reducedDim(sce3, type = "PCA") <- calculatePCA(assay(sce3, "filteredCellsNormalized"))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData
+clusterPC = kmeans(reducedDim(sce3, "PCA"), 5)$cluster
+colData(sce3) <- cbind(colData(sce3), clusterPC)
+```
+
+For `ExperimentSubset`:
+
+```{r, eval = FALSE}
+#################################
+#     Use ExperimentSubset      #
+#################################
+
+#Load PBMC4K dataset and create ExperimentSubset object:
+sce <- TENxPBMCData(dataset = "pbmc3k")
+es <- ExperimentSubset(sce)
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
+colData(es) <- cbind(colData(es), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new subset called ‘filteredCells’:
+es <- es[, order(-es@colData$sum)]
+es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
+
+#Normalize ‘filteredCells’ subset using scater library and store it back:
+es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
+
+#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
+topHVG1000 <- getTopHVGs(modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
+reducedDim(es, type = "PCA", subsetName = "hvg1000") <- calculatePCA(assay(es, "hvg1000"))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData of subset
+clusterPC = kmeans(reducedDim(es, "PCA", subsetName = "hvg1000"), 5)$cluster
+colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000"), clusterPC)
+
+#Show the current condition of the ExperimentSubset object:
+subsetSummary(es)
+```
