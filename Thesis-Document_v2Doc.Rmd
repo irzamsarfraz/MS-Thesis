@@ -20,11 +20,11 @@ library(DiagrammeR)
 The Bioconductor Experiment objects such as the SummarizedExperiment or SingleCellExperiment are data containers for storing one or more matrix-like assays along with associated row and column metadata. These objects have been used to facilitate the storage and analysis of high-throughput genomic data generated from technologies such as single-cell RNA sequencing. One common computational task in many genomics analysis workflows is to perform subsetting of the data matrix before applying down-stream analytical methods. For example, one may need to subset the columns of the assay matrix to exclude poor-quality samples or subset the rows of the matrix to select the most variable features. Traditionally, a second object is created that contains the desired subset of assay from the original object. However, this approach is inefficient as it requires the creation of an additional object containing a copy of the original assay and leads to challenges with data provenance. To overcome these challenges, we proposed a data container that's built on top of other available Experiment classes and adds additional subset support to these classes while retaining the same usage as well as the interface to ensure that the users use the data-container similar to other commonly used classes. This R package called ExperimentSubset, is a data container that implements classes for efficient storage and streamlined retrieval of assays that have been subsetted by rows and/or columns. These classes are able to inherently provide data provenance by maintaining the relationship between the subsetted and parent assays. We demonstrate the utility of this package on a single-cell RNA-seq dataset by storing and retrieving subsets at different stages of the analysis while maintaining a lower memory footprint. Overall, the ExperimentSubset data-container is a flexible container for the efficient management of subsets while providing same interface and data provenance.
 
 # Introduction
-Over the past decade or so, due to the extensive availability of computational resources, computational approaches have contributed significantly to offer efficient and effective solutions to intricate research questions in domains that do not directly offshoot from traditional computer science paradigm. Computational Biology, Computational Biomedicine and Bioinformatics are some of the recently developed domains that have emerged directly from the amalgamation of Biology, Computer Science and Statistics due to a strenuous need of solving complex biological problems in the era of big data and informatics.
+Over the past decade or so, due to the extensive availability of computational resources, computational approaches have contributed significantly to offer efficient and effective solutions to intricate research questions in domains that do not directly offshoot from traditional computer science paradigm. Computational Biology, Computational Biomedicine and Bioinformatics are some of the recently developed domains that have emerged directly from the amalgamation of Biology, Computer Science and Statistics due to a strenuous need of solving complex biological problems in the era of big data and informatics [@Bayat2002][@Chukwudozie2021].
 
-Some of the grand challenges that been worked on extensively over the past few decades include genomic sequence analysis, homology search and protein structure prediction. Overall, end goal of all of these challenges is to infer a better understanding of the underlying biological complexity and to somehow use this understanding to combat diseases that were previously incurable or untreatable. 
+Some of the grand challenges that been worked on extensively over the past few decades include genomic sequence analysis [@Dewey2012], homology search [@Cui2007] and protein structure prediction [@Breda2007]. Overall, end goal of all of these challenges is to infer a better understanding of the underlying biological complexity and to somehow use this understanding to combat diseases that were previously incurable or untreatable. 
 
-At the same time, the availability and the use of computational resources have increased by manifold over the last decade and therefore this provides an excellent opportunity to use these resources to solve the above-mentioned complex problems. Genomic sequence analysis is one the problems that is of particular interest to the researchers around the world due to its explanatory power of various diseases, their prognosis and outcomes.
+At the same time, the availability and the use of computational resources as well as the data have increased by manifold over the last decade and therefore this provides an excellent opportunity to use these resources to solve the above-mentioned complex problems [@Leonelli2019]. Genomic sequence analysis [@Dewey2012] is one the problems that is of particular interest to the researchers around the world due to its explanatory power of various diseases, their prognosis and outcomes.
 
 Genomic sequence extraction technologies have improved drastically since the beginning of this millennium and have only continued to grow. These technologies offer extraction of genetic data at very high resolution (even possible at cellular level) and the analysis of this data can result in extremely useful biological insights. For example, Precision Medicine is an emerging domain that combines genetic data extracted through these technologies with the patient clinical data to predict patient outcome [@Ashley2010].
 
@@ -34,7 +34,7 @@ These computational analyses that lead to useful biological insights are often q
 As the proposed study/project has applications in Bioinformatics, a brief introduction and explanation of the key concepts and terminologies is required. Some of these concepts and terminologies are described below:
 
 ### High-throughput genomic data
-High-throughput genomic technologies such as microarrays and sequencing allow rapid generation of vast amounts of data from both DNA and RNA of an organism that is both large in size and high-dimensional. These high-throughput genome extraction technologies are widely used to profile the genome of an organism, to better understand the genetic structure of an organism or even to identify and address the causes of certain diseases and defects. In contrast, the traditional PCR-based approaches are more concerned with amplification and detection of a few transcripts of interest as compared to hundreds of thousands in high-throughput approaches. Most of the times, the output of high-throughput sequencing experiments are counts matrices where each column of the matrix represents a particular sample and the row represents the quantified presence of a particular gene or transcript in that sample. These matrices form the basis of a large amounts of statistical analyses that can be performed to gain insight about the underlying biology of the samples.
+High-throughput genomic technologies [@Lightbody2019] such as microarrays and sequencing allow rapid generation of vast amounts of data from both DNA and RNA of an organism that is both large in size and high-dimensional. These high-throughput genome extraction technologies are widely used to profile the genome of an organism, to better understand the genetic structure of an organism or even to identify and address the causes of certain diseases and defects. In contrast, the traditional PCR-based approaches are more concerned with amplification and detection of a few transcripts of interest as compared to hundreds of thousands in high-throughput approaches. Most of the times, the output of high-throughput sequencing experiments are counts matrices where each column of the matrix represents a particular sample and the row represents the quantified presence of a particular gene or transcript in that sample. These matrices form the basis of a large amounts of statistical analyses that can be performed to gain insight about the underlying biology of the samples.
 
 ### Assay
 An `assay` (or a data assay) is the actual form of the data that can be used with a particular statistical analysis method. Initially, this `assay` is the counts matrix which is output from a sequencing experiment but can undergo several transformations throughout its lifetime during an analysis workflow. For example, the initial assays (counts matrix) can undergo normalization, log-transformation, scaling, trimming among others and are stored as separate assays which be called and used during the analysis workflow as per requirements of the workflow and the method being used. However, it must be understood that these multiple assays belong to the same experiment but only represent the multiple transformations that have been performed on the original `assay` so as to have original `assay` in all forms. The assays always have dimensions of `m*n` where `m` is the number of genes (rows) and `n` is the number of samples (columns).
@@ -55,12 +55,12 @@ The `altExp`, `altExps` or `altExperiments` refer to the additional data slots r
 The `metadata` slot is available with all Experiment classes and refers to any additional data or information about the data that may not particularly fit to any other of the available slots in these classes. Occasionally, `metadata` is used to store the information about the authors, information about the protocols that are used to generate the data and to describe the nature of the data.  
 
 ### Bioconductor & CRAN
-Packages or libraries built for R environment are available for download and use from multiple sources including R `CRAN`, `Bioconductor` or even directly from `Github`. The Comprehensive R Archive Network (`CRAN`) is the largest repository for R packages maintained by R developers, while `Bioconductor` is a community maintained (R core) repository (as well as a database for sample datasets) and specializes in packages/libraries with applications in biology. Submission to both of these repositories undergo strenuous review (including novelty of the package, code quality and testing) before it is accepted and becomes available for users to download and use. Packages from both of these resources once available can easily be downloaded from within R console environment. 
+Packages or libraries built for R environment are available for download and use from multiple sources including R `CRAN` [@RFoundationforStatisticalComputing], `Bioconductor` [@Gentleman2004] or even directly from `Github`. The Comprehensive R Archive Network (`CRAN`) is the largest repository for R packages maintained by R developers, while `Bioconductor` is a community maintained (R core) repository (as well as a database for sample datasets) and specializes in packages/libraries with applications in biology. Submission to both of these repositories undergo strenuous review (including novelty of the package, code quality and testing) before it is accepted and becomes available for users to download and use. Packages from both of these resources once available can easily be downloaded from within R console environment. 
 
 ### Bioconductor Experiment objects
 As previously explained that `Biocodunctor` is a database/repository for R packages and datasets having applications in biology, data-containers or data-structures are required to particularly handle the such high-dimensional datasets which can manage multiple data assays and the associated phenotype data (`colData`) and the gene metadata. While, this can be managed by using native R data-structures like `matrix` and `dataframes`, it is much more intuitive to handle this multi-data datasets using `Experiment` classes that are designed specifically for this purpose.
 
-These Experiment classes including `SummarizedExperiment` and `SingleCellExperiment` are designed in such a way as to allow the users to use the objects of these classes in a more biologically and statistically relevant manner especially considering the workflow of such datasets. For example, these classes allow storage of multiple `assays`, `colData`, `rowData` as well as other types of data such as dimensionality reduction results within the same object as all of these data types are used within an analysis workflow from the same experiment.
+These Experiment classes including `SummarizedExperiment` [@Tierny2008] and `SingleCellExperiment` [@Lun] are designed in such a way as to allow the users to use the objects of these classes in a more biologically and statistically relevant manner especially considering the workflow of such datasets. For example, these classes allow storage of multiple `assays`, `colData`, `rowData` as well as other types of data such as dimensionality reduction results within the same object as all of these data types are used within an analysis workflow from the same experiment.
 
 Moreover, because these data-containers are specialized, they acquire multiple features necessary for such high-dimensional data such as use of `dgCMatrix` (compressed sparse matrices) for `assay` data, `dataframes` for `colData`/`rowData` and `SimpleList` for dimensionality reduction results, all of which have additional advantages instead of using a single base data-structure for all types of data.
 
@@ -98,7 +98,7 @@ In this specific workflow, the `counts` matrix is filtered to remove the empty d
 To understand the issues with this approach, we consider the number of subsets that are created in this workflow. During this workflow, first subset was created when empty droplets were removed, a second subset was created when poor quality samples were removed, a third subset was created when specific type of cells were used (T-Cells) and finally a fourth subset was created when the top most variable genes were separated for downstream analysis. Since the manipulation of subsets is not possible with the currently available data-containers/classes, this results in the creation of five objects just for this sample workflow where some of the objects are retaining the redundant data and thus not result in higher memory consumption in terms of object sizes but also creates complexity in terms of data provenance.
 
 ### singleCellTK
-The singleCellTK is an R-based toolkit that integrates a number of tools and algorithms for the analysis of single cell sequencing data either through a console-based pipeline or through the R-shiny interactive user-interface which is accessible through the toolkit R package. The quality control workflow pipeline through the singleCellTK is visualized below:
+The singleCellTK [@Hong2021] is an R-based toolkit that integrates a number of tools and algorithms for the analysis of single cell sequencing data either through a console-based pipeline or through the R-shiny interactive user-interface which is accessible through the toolkit R package. The quality control workflow pipeline through the singleCellTK is visualized below:
 
 ![](sctk_qc.png)
 
@@ -132,7 +132,7 @@ How can we develop a data-structure that can efficiently manage subsets of high-
 4. Package shall be platform independent and should work with all operating systems supported by R language.
 
 ## Application of proposed research
-As the direct beneficiaries of our research, the analysts, researchers and developers, can indeed build analysis pipelines and workflows for genetic sequencing data in a much better, convenient and efficient manner by using our approach as a drop-in replacement and a building block for already available containers for such data that often include subsets of such data. Indirectly, it is the patients and the general public that is the recipient of the outcomes of the research of this advancement and consequent improvements in such approaches, including ours that impacts the disease prognosis, its outcome and its treatment. While the abstract utility of our proposal lies in Bioinformatics (particularly in biological data mining and analysis), the proposed implementation and the direct application indeed acquires knowledge from a range of multidisciplinary domains (data mining, computational biology and statistics) all of which have a common root in Computer Science.
+As the direct beneficiaries of our research, the analysts, researchers and developers, can indeed build analysis pipelines and workflows for genetic sequencing data in a much better, convenient and efficient manner by using our approach as a drop-in replacement and a building block for already available containers for such data that often include subsets of such data. Indirectly, it is the patients and the general public that is the recipient of the outcomes of the research of this advancement and consequent improvements in such approaches, including ours that impacts the disease prognosis, its outcome and its treatment. While the abstract utility of our proposal lies in Bioinformatics (particularly in biological data mining and analysis), the proposed implementation and the direct application indeed acquires knowledge from a range of multidisciplinary domains (data mining, computational biology and statistics) all of which have a common root in computer science.
 
 ## Thesis outline
 - Chapter 1: Deals with the introduction, basic terminologies, background knowledge, problem statement, research objectives, research question and scope of the research.
@@ -185,7 +185,7 @@ For example, if multiple datasets are available for lung cancer, they can be int
 The `MultiAssayExperiment` allows the storage of multiple datasets having different dimensions but it is more oriented towards integration of data and therefore does not provide a straightforward approach towards subsetting of single experiments. 
 
 ## Seurat
-Seurat is an R console based toolkit that includes extensive algorithms for data pre-processing, processing, integration and visualization, and is used widely especially in terms of integration of multiple data modalities of single cell data. An overview of the seurat workflow is visualized in the figure below:
+Seurat [@Satija2015][@Stuart2019][@Hao2021] is an R console based toolkit that includes extensive algorithms for data pre-processing, processing, integration and visualization, and is used widely especially in terms of integration of multiple data modalities of single cell data. An overview of the seurat workflow is visualized in the figure below:
 
 ```{r, echo=FALSE}
 mermaid("
@@ -207,7 +207,7 @@ The seurat package uses its own object to manage the data manipulation in the wo
 Overall, the Seurat object is an efficient way to manage data especially when using the Seurat workflow since slots (as well as the corresponding functions to get or set data to these slots) are available for each step of the pipeline. However, using the Seurat object outside of the Seurat tool and for custom analysis workflows that utilize functions from other packages and libraries is comparatively complex owing to the fact that a majority of the analysis tools and packages use Experiment classes for input and output. Moreover, provenance in terms of a hierarchical structure of subsets is not possible using the Seurat object.
 
 ## Monocle
-Monocle is another R package that integrates a number of tools for common single cell analysis tasks such as input, counting cells, classification of cells, clustering, construction of cell trajectories in pseudotime and differential expression. The monocle proposes the following recommended analysis workflow:
+Monocle [@Qiu2017][@Qiu20172][@Trapnell2014] is another R package that integrates a number of tools for common single cell analysis tasks such as input, counting cells, classification of cells, clustering, construction of cell trajectories in pseudotime and differential expression. The monocle proposes the following recommended analysis workflow:
 
 ```{r, echo=FALSE}
 mermaid("
@@ -229,12 +229,12 @@ As evident, a single experiment constitutes a single CellDataSet object with a s
 
 
 # Research Methodology
-The overall research methodology for this study includes the package design (high-level logical design to support subsets in existing `Experiment` packages), package implementation (development and deployment of package in R environment, including package documentation) and the validation of the efficiency of the package on different datasets (results). The research methodology can be perceived easily from the Figure.
+The overall research methodology for this project (as a development project) includes a number of steps, starting from the high-level design of the class and how the subsets should work, handling of data redundancy issues in the design of the package, making sure that package could be used as a drop-in replacement by working towards integration of the existing Experiment classes and finally implementing the said subset classes within the umbrella of an R package, followed by package documentation, validation and performance comparison. The figure describes our followed methodology in brief starting from package design to package implementation.
 
 ![](method_top.png)
 
-## Package Design
-Keeping in view the objectives and scope of the package, an abstract logical design of the package (in regards to other `Experiment` classes) is illustrated in the figure below with specific importance on the creation and manipulation of different types of subsets.
+## Design logical structure of subsets & their storage
+Keeping in view the objectives and scope of the package, an abstract logical design and structure of the package (in regards to other `Experiment` classes) is illustrated in the figure with specific importance on the creation and manipulation of different types of subsets.
 
 ![](design.png)
 
@@ -244,11 +244,21 @@ The goal of the package is to provide the ability to create subsets from availab
 
 The figure above shows the general internal proposed structure of the class object, where the overall object can have multiple main assays (inherited from the parent `Experiment` class) and in addition to these assays, it should be able to store subsets and subset specific data. Subset-specific information includes the name of the subset which is used to identify the subset, row/column indices which are used to fetch the data directly from a main assay and therefore would help in memory savings, name of the parent assay which helps in both fetching the data as well as helps in maintaining data provenance. Additionally, subset-specific experiment data is stored in an empty `Experiment` object which should be the same as the parent object to avoid maintenance and compatibility issues.
 
+## Identify & handle data redundancy issues in the design
+One of the issues currently both with the existing Experiment classes and the subsets is the handling of data redundancy which ultimately leads to increased memory consumption. As the typical datasets used with these Experiment classes are generally quite large (in the order of atleast gigabytes), memory consumption is definitely a troublesome that must be handled in an efficient way. With the existing Experiment classes you have to create additional objects and therefore there isn't really a way to save memory in terms of object sizes.
+
+![](indices.png)
+
+In our proposed approach, we use indices to store subsets instead of storing the actual values and use these indices as pointers to reference the actual data. This approach allows us to eliminate the storage of redundant data values since they are already stored in another data matrix. While the approach itself is slightly complicated due to the hierarchical linking of the subsets and the consequent hierarchical structure of the pointers, however, memory savings offered as a result of this approach would be significant. For example in the figure shown above, if we consider that the values shown constitute a complete matrix and we wish to create a subset highlighted by the values included in the red rectangles, we only store the row indices and the column indices and use these indices to refer the actual values. More details on we have actually implemented this is available in the "Internal class AssaySubset" section below.
+
+## Integration of existing Experiment classes
+To ensure that our proposed package/classes work as drop-in replacement (existing functions would not need to be changed in other packages and libraries) against other commonly used Experiment classes, we decided to opt for the integration of these classes in such a way that our package and the subset classes within our package could be used directly with existing methods and functions that use the currently available Experiment classes. For this purpose, we decided to directly inherit from these classes and add subset support (slot) to them and provide the capability to create and manipulate subsets in a fashion similar to existing classes that include `SummarizedExperiment` [@Tierny2008], `RangedSummarizedExperiment` [@Tierny2008], `SingleCellExperiment` [@Lun], `TreeSummarizedExperiment` [@Huang2021] and `SpatialExperiment` [@Righelli2021]. 
+
 ![](class_diagram.png)
 
-The figure above represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
+The figure represents the formal class diagram, where the outer enclosure represents the `ExperimentSubset` package which further contains five subset specific classes inherited from the available `Experiment` classes. This inheritance-based approach allows the package to be used as a drop-in replacement for these classes which are already well-established for use in analysis workflows and additionally adds subset support to them. The subset-specific classes `SubsetSummarizedExperiment`, `SubsetRangedSummarizedExperiment`, `SubsetSingleCellExperiment`, `SubsetTreeSummarizedExperiment` and `SubsetSpatialExperiment` add subset-specific features while retaining everything from their parent classes. Overall, the `ExperimentSubset` package should assign one of these subset classes to the input object which matches the class of this input object which could then be used in the dowstream analysis in a fashion similar to the parent class.
 
-## Package Implementation
+## Implement new classes with subset support
 The R programming language supports multiple types of object-oriented class systems including `S3`, `S4`, `R5` and `R6`. For the implementation of the said package, we use the `S4` class system because of the following two reasons:
 
 1. `S4` class system is more OOP oriented (although R6 perfectly mimics standard OOP) than other classes, where you can have setter/getter methods with a single generic function.
@@ -310,7 +320,9 @@ print(class(es@subsets$subset1))
 print(es@subsets$subset1)
 ```
 
-### Implement subset manipulation methods
+## Implement new methods for creation & manipulation of subsets
+For the creation and manipulation of subsets with our package and the subset classes, we create and implement a number of functions and methods which are listed below along with their description:
+
 1. `createSubset()` method is implemented for the creation of a subset. The input to this method is an `ExperimentSubset` object and specific parameters that specify the subset name, row/column indices of the parent assay and the name of the parent assay to which this subset belongs. The result of using this function is the creation of a new `AssaySubset` class object that stores the information of the new subset which is ultimately stored as an element in the input `ExperimentSubset` object.
 2. `getSubsetAssay()` and `setSubsetAssay()` methods are implemented to get or set an assay specifically to a subset. `S4` method approach is not used here since both getter and setter methods work differently and require different number of arguments.
 3. `subsetColData()` `S4` method is implemented that allows setting and getting of `colData` specifically from/to a subset.
@@ -329,10 +341,13 @@ print(es@subsets$subset1)
 16.	`subsetRowLinks()` method from `TreeSummarizedExperiment` class to get or set `rowLinks` to specifically a subset.
 17.	`subsetColLinks()` method from `TreeSummarizedExperiment` class to get or set `colLinks` to specifically a subset.
 
-### Override methods
+## Override existing methods by adding subset support to them
+To ensure that the subsets can be accessed and updated through the methods available from the existing classes, we override these methods and add subset support to them. 
+
 1.	To support subset capability with existing methods from all `Experiment` classes, we override these methods and add subset support to them made possible by use of direct inheritance from these classes.
 2.	For methods that exist with multiple classes, we create a single function and then call this function in the generic function of each of the class method to minimize the code redundancy and to increase code reusability.
 3.	The methods inherited from the `Experiment` classes to which subset support have been added through the strategy described above are specified below:
+
 - `show()` 
 
 The `show()` is a base R (`methods` class) function that prints the object summary, visualizes a plot or prints other necessary information which is suitable for that particular class of objects. Here, we override the `show()` function and mimic the output of other `Experiment` classes but additionally add printing of subsets and subset assays for easier understanding of the current object structure. 
@@ -393,16 +408,31 @@ The `rowLinks` accessor method retrieves the information of the rows linked with
 
 The `colLinks` accessor method retrieves the information of the columns linked with the col tree in the `TreeSummarizedExperiment` class. Here we have added support for subsets using the `subsetName` parameter which lets us retrieve the `colLinks` for just a particular subset as long as the object is inherited from the same parent class.
 
-
+## Create documentation & add unit tests
 ### Document package
-R packages are generally documented in two standard ways, one through `roxygen2` package that creates a documentation page for each function or method and secondly through a package vignette which is more of a user guide. Following both of these standards, we used the `roxygen2` R package to create documentation (`Rd` files) for each of the function/method in our package that describes the function/method name, short description, input/output of the function/method and a runnable example to show the working of the function/method. These `Rd` files generated by `roxygen2` then become available online repositories for users to view such as the [rddr](rddr.io). 
+R packages are generally documented in two standard ways, one through `roxygen2` [@Hadley2020] package that creates a documentation page for each function or method and secondly through a package vignette which is more of a user guide. Following both of these standards, we used the `roxygen2` R package to create documentation (`Rd` files) for each of the function/method in our package that describes the function/method name, short description, input/output of the function/method and a runnable example to show the working of the function/method. These `Rd` files generated by `roxygen2` then become available online repositories for users to view such as the [rddr](rddr.io). 
 
-Additionally, to document the usage of the package, we used `Rmarkdown` to create a vignette to serve as a user manual. In the vignette, we describe the overall purpose/motivation of the package, the structure of the package, available functions/methods and a sample toy example. Moreover, we have added a sample workflow using the `pbmc3k` dataset that illustrates the usefulness of our package. This vignette is available with the package and can either be viewed from the `Bioconductor` landing page or from within the R console. 
+Additionally, to document the usage of the package, we used `rmarkdown` [@Yihui2020][@Yihui2018][@Allaire2021] to create a vignette to serve as a user manual. In the vignette, we describe the overall purpose/motivation of the package, the structure of the package, available functions/methods and a sample toy example. Moreover, we have added a sample workflow using the `pbmc3k` dataset that illustrates the usefulness of our package. This vignette is available with the package and can either be viewed from the `Bioconductor` landing page or from within the R console. 
 
 ### Test package
-To ensure the correctness of the our package throughout its development and post-development life-cycle, we make use of unit testing through the R `testthat` package to test our package in small units, particularly each function and method in our package. We particularly use unit-testing because the github `travis` build allows us to automatically run the unit tests for each commit/update and ensures that with each update none of the functionality breaks. For each function or method that we have either created or overrided from the other `Experiment` classes, we specify a set of input and outputs and test these at each iteration of the development life-cycle and later with the updates and ensure that the output returned by these functions are exactly the ones that are expected with the functionality. 
+To ensure the correctness of the our package throughout its development and post-development life-cycle, we make use of unit testing through the R `testthat` [@Hadley2011] package to test our package in small units, particularly each function and method in our package. We particularly use unit-testing because the github `travis` build allows us to automatically run the unit tests for each commit/update and ensures that with each update none of the functionality breaks. For each function or method that we have either created or overrided from the other `Experiment` classes, we specify a set of input and outputs and test these at each iteration of the development life-cycle and later with the updates and ensure that the output returned by these functions are exactly the ones that are expected with the functionality. 
 
 The `testthat` package allows us to specify all unit tests within a single `testthat.R` file with their corresponding inputs and the expected outputs.
+
+## Validate package
+To validate that the package and the subset classes that we have created by inheriting from the existing Experiment classes do actually store and retrieve the same data as they would without using our subset classes, we create subsets and inspect the data that is available through our package and compare it with the existing Experiment classes. For this validation, we follow the workflow given below:
+
+1. Import a sample dataset in the form of a `SingleCellExperiment` object.
+2. Convert this `SingleCellExperiment` object into `ExperimentSubset` (our package) object.
+3. Create a subset with a selected number of rows/columns with our package and create a new object for the `SingleCellExperiment` class with the same rows/columns.
+4. Inspect data through both the newly created subset in `ExperimentSubset` object and the additional `SingleCellExperiment` object.
+5. Run a normalization algorithm on just the subset rows/columns and inspect the normalized data through both the approaches.
+6. Run a dimensionality reduction algorithm on just the subset rows/columns and inspect the `reducedDim` data through both approaches.
+
+The steps 4, 5 & 6 are can be used to validate the package by ensuring the the data stored, computed and manipulated through our package (`ExperimentSubset`) and the other Experiment package (`SingleCellExperiment`) are actually the same with no loss of information with our design of the package. The validation and the output from this workflow is further discussed in detail in the "Validation" sub-section of the "Results & Discussion" section of the document. 
+
+## Performance comparison with existing Experiment classes
+To ensure that our package is actually efficient when compared to the existing state of the art Experiment packages, we run a performance comparison using a sample workflow and then measuring the package efficiency in terms of memory savings that are offered by our package in comparison to the other packages. The sample workflow and the results obtained are discussed in detail in the "Results & Discussion" section of the document. 
 
 # Results & Discussion
 The `ExperimentSubset` R package was developed based on the implementation specified in the 'Methods' section of this document. To compare the memory savings offered by our package in contrast to other data structure packages such as the `SingleCellExperiment`, we performed a thorough testing on a number of real and sample datasets. The overall goal of this experimentation and testing was to evaluate if our package can offer memory utilization and savings especially when creation and manipulation of subsets of data are vital in an analysis workflow.
@@ -460,7 +490,7 @@ The `ExperimentSubset` R package was developed based on the implementation speci
 50. `colLinks`
 
 ## Sample Analysis Workflow
-As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accommodated in multiple guides and official tutorials. The step-by-step workflow is illustrated and described below:
+As the overall purpose of the package is to conserve memory and provide provenance tracking in an analysis when subsets are created, we use a sample workflow to demonstrate both of the objectives. The sample workflow used here is a common workflow generally acceptable for single cell RNA sequencing and accommodated in multiple guides and official tutorials [@Amezquita2020]. The step-by-step workflow is illustrated and described below:
 
 ![](sampleWorkflow.png)
 
@@ -472,73 +502,7 @@ As the overall purpose of the package is to conserve memory and provide provenan
 - Dimensionality reduction (PCA) is performed on these top variable genes using the normalized assay and the computed results are stored back into the object. 
 - Kmeans clustering is performed on the dimensionality reduction results computed on the top 1000 variable genes and the cluster labels are stored back into the object.
 
-An R script that can be used to compute the analysis above with a `SingleCellExperiment`object is given below:
-
-```{r, eval = FALSE}
-#Load PBMC4K dataset
-sce1 <- TENxPBMCData(dataset = "pbmc3k")
-
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- perCellQCMetrics(assay(sce1, "counts"))
-colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new object:
-sce1 <- sce1[, order(-sce1@colData$sum)]
-sce2 <- sce1[,1:round(ncol(es) * 0.40)]
-
-#Normalize sce2 using scater library and store it back:
-assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
-
-#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
-topHVG1000 <- getTopHVGs(modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
-sce3 <- sce2[topHVG1000,]
-
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
-reducedDim(sce3, type = "PCA") <- calculatePCA(assay(sce3, "filteredCellsNormalized"))
-
-#Find clusters from reducedDims of highly variable genes and store the results back into colData
-clusterPC = kmeans(reducedDim(sce3, "PCA"), 5)$cluster
-colData(sce3) <- cbind(colData(sce3), clusterPC)
-```
-
-The sample analysis described above creates multiple subsets and as can be seen that **3** `SingleCellExperiments` objects are required to complete the analysis, therefore adding to the redundancy of the data. Now we run the same analysis using `ExperimentSubset` below:
-
-```{r, eval = FALSE}
-#################################
-#     Use ExperimentSubset      #
-#################################
-
-#Load PBMC4K dataset and create ExperimentSubset object:
-sce <- TENxPBMCData(dataset = "pbmc4k")
-es <- ExperimentSubset(sce)
-
-#Compute perCellQCMetrics on counts matrix:
-perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
-colData(es) <- cbind(colData(es), perCellQCMetrics)
-
-#Filter cells with low column sum and create a new subset called ‘filteredCells’:
-es <- es[, order(-es@colData$sum)]
-es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
-
-#Normalize ‘filteredCells’ subset using scater library and store it back:
-es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
-
-#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
-topHVG1000 <- getTopHVGs(modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
-es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
-
-#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
-reducedDim(es, type = "PCA", subsetName = "hvg1000") <- calculatePCA(assay(es, "hvg1000"))
-
-#Find clusters from reducedDims of highly variable genes and store the results back into colData of subset
-clusterPC = kmeans(reducedDim(es, "PCA", subsetName = "hvg1000"), 5)$cluster
-colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000"), clusterPC)
-
-#Show the current condition of the ExperimentSubset object:
-subsetSummary(es)
-```
-
-As explicitly evident from the R scripts above, to run the workflow we use a **single** `ExperimentSubset` object in contrast to **3** `SingleCellExperiment` objects for the same analysis. 
+An R script that can be used to compute the analysis above with a `SingleCellExperiment` class and with our `ExperimentSubset` package is available in Appendix A. The sample analysis described above creates multiple subsets and as can be seen that **3** `SingleCellExperiments` objects are required to complete the analysis, therefore adding to the redundancy of the data. As explicitly evident from the R scripts (Appendix A), to run the workflow we use a **single** `ExperimentSubset` object in contrast to **3** `SingleCellExperiment` objects for the same analysis.
 
 ## Supported Classes
 - `SummarizedExperiment`
@@ -552,7 +516,7 @@ As explicitly evident from the R scripts above, to run the workflow we use a **s
 To further demonstrate the effectiveness of our package, we run the same scripts with datasets described in the **Selected Datasets** section and tabulate the results according to each of the approach described below.
 
 ### Selected Datasets for Benchmarking
-To benchmark our package, we selected a number of datasets with varying degree of dimensions and nature of the data to get an accurate depiction of memory saving capability of our package. In doing so, we selected **6 pbmc datasets** that are generally considered as standard datasets to test when working with or developing new packages in the single cell and R community. Additionally, because we wanted to get an accurate picture of memory savings, we used **7 real published datasets** for benchmarking all of which had varying degree of sparsity and dimensions curated together in the `scRNASeq` R package. One of the issues with single cell datasets is the sparsity associated with the data, where each dataset largely consists of zeros which makes these resultant datasets extremely sparse in contrast to microarray or bulk RNA-seq datasets. While the original usage of the package is considered for single cell data, the package itself supports all expression data regardless of the protocol and technology used. As such, the package supports expression data from microarrays as well as from bulk RNA-seq protocols. Keeping this in mind, we also benchmark non-sparse datasets which is typical to microarrays and bulk-RNA seq by creating **randomly populated datasets with the same dimensions as the 1-7 real datasets with near to zero sparsity**. This diverse range of datasets allow us to provide an accurate picture of memory savings provided by our package. A list and brief description of the selected datasets is given below:
+To benchmark our package, we selected a number of datasets with varying degree of dimensions and nature of the data to get an accurate depiction of memory saving capability of our package. In doing so, we selected **6 pbmc datasets** [@10xGenomics] that are generally considered as standard datasets to test when working with or developing new packages in the single cell and R community. Additionally, because we wanted to get an accurate picture of memory savings, we used **7 real published datasets** for benchmarking all of which had varying degree of sparsity and dimensions curated together in the `scRNASeq` [@DavideCole2021] R package. One of the issues with single cell datasets is the sparsity associated with the data, where each dataset largely consists of zeros which makes these resultant datasets extremely sparse in contrast to microarray or bulk RNA-seq datasets. While the original usage of the package is considered for single cell data, the package itself supports all expression data regardless of the protocol and technology used. As such, the package supports expression data from microarrays as well as from bulk RNA-seq protocols. Keeping this in mind, we also benchmark non-sparse datasets which is typical to microarrays and bulk-RNA seq by creating **randomly populated datasets with the same dimensions as the 1-7 real datasets with near to zero sparsity**. This diverse range of datasets allow us to provide an accurate picture of memory savings provided by our package. A list and brief description of the selected datasets is given below:
 
 |Serial No.| Dataset | Dimensions | Sparsity | Type of Dataset |
 | -------- | ------- | ---------- | -------- | ---- |
@@ -577,7 +541,7 @@ To benchmark our package, we selected a number of datasets with varying degree o
 | 19 | pbmc33k | 32738 33148 | 0.9766104 | Standard dataset (33k cells) |
 
 ### Approach 1: dgCMatrix
-`dgCMatrix` is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix. This approach is by default used with all `Experiment` classes for storage and manipulation of matrices within the objects apart from some other more efficient approaches such as `hdf5` and `tileDB` that have recently become popular. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
+`dgCMatrix` [@Bates2021] is a compressed form of matrices available in R and particularly useful when matrices are sparse since it is able to extensively compress the zero cells of the matrix. This approach is by default used with all `Experiment` classes for storage and manipulation of matrices within the objects apart from some other more efficient approaches such as `hdf5` [@hdf5] and `tileDB` [@PapadopoulosStavros2016] that have recently become popular. Below we tabulate the the results from various datasets, their descriptions and the memory savings offered by our package for all of these datasets:
 
 |Serial No.|Dataset|Dimensions|Avg. Counts/Cell|Sparsity|SCE|ES|Savings|
 |----------|-------|----------|----------------|--------|---|--|-------|
@@ -640,7 +604,7 @@ The figure above highlights the memory savings offered by the ExperimentSubset d
 
 ![](results3.png)
 
-The figure above highlights the memory savings offered by the ExperimentSubset data-container using self-contributed random datasets that have the same dimensions as the previously used real datasets but are not filled with random values to make sure that it is no longer sparse and all data cells are filled with random values. One of the major reasons of testing these random datasets is to ensure that when the data-container is used with datasets (possiblye bulk-RNA seq datasets that have very little sparsity), the memory savings are still consistent.
+The figure above highlights the memory savings offered by the ExperimentSubset data-container using self-contributed random datasets that have the same dimensions as the previously used real datasets but are not filled with random values to make sure that it is no longer sparse and all data cells are filled with random values. One of the major reasons of testing these random datasets is to ensure that when the data-container is used with datasets (possibly bulk-RNA seq datasets that have very little sparsity), the memory savings are still consistent.
 
 From all of the figures above, the memory savings in terms of object sizes (current occupied memory) are quite evident with ExperimentSubset package saving almost half of the additional memory when compared with SingleCellExperiment data-container. Although the figures shown above represent the memory savings offered using the approach 1 where we used the dgCMatrix (a matrix that specializes in storing sparse data), we computed results with the standard R matrix as well and obtained similar memory savings which are shown in the table but not visualized.
 
@@ -655,6 +619,55 @@ es <- readRDS("es.rds")
 subsetSummary(es)
 ```
 
+## Validation
+To validate that the data stored and manipulated through the use of our package `ExperimentSubset` in the form of subsets and through `SingleCellExperiment` package is same throughout the analysis workflow, we match the output from both packages. The analysis workflow used in described in the section 4.2 of this document and the complete script is available in Appendix A of this document. For displaying the output here, we saved the objects during the workflow and reload them to show the output:
+
+```{r, warning=FALSE}
+# SingleCellExperiment
+sce1 <- readRDS("sce1Validation.rds")
+sce2 <- readRDS("sce2Validation.rds")
+sce3 <- readRDS("sce3Validation.rds")
+topHVG1000SCE <- scran::getTopHVGs(scran::modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+
+# ExperimentSubset
+es <- readRDS("esValidation.rds")
+topHVG1000ES <- scran::getTopHVGs(scran::modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+
+# SingleCellExperiment
+print(sum(assay(sce1, "counts")))
+# ExperimentSubset
+print(sum(assay(es, "counts")))
+
+# SingleCellExperiment
+print(sce1@colData$sum[1:10])
+# ExperimentSubset
+print(es@colData$sum[1:10])
+
+# SingleCellExperiment
+print(topHVG1000SCE[1:10])
+# ExperimentSubset
+print(topHVG1000ES[1:10])
+
+# SingleCellExperiment
+print(sum(assay(sce3, "filteredCellsNormalized")))
+# ExperimentSubset
+print(sum(assay(es, "hvg1000")))
+
+# SingleCellExperiment
+print(abs(reducedDim(sce3, type = "PCA")[1:4, 1:4]))
+# ExperimentSubset
+print(abs(reducedDim(es, type = "PCA", subsetName = "hvg1000")[1:4, 1:4]))
+
+# Printing objects
+# SingleCellExperiment
+print(sce1)
+print(sce2)
+print(sce3)
+# ExperimentSubset
+print(es)
+```
+
+As evident from the workflow output above, the data stored, manipulated and output for a particular input data is same throughout the workflow either using the `SingleCellExperiment` object or our `ExperimentSubset` object which validates our package. Additionally, the outputs from these objects (3 objects for `SingleCellExperiment` and 1 for `ExperimentSubset`) are displayed that essentially contain the same data, although `ExperimentSubset` contains data in the form of references instead of storing additional data where not required. 
 
 # Conclusion, limitations, future work & availability
 
@@ -677,3 +690,75 @@ The implemented `ExperimentSubset` R package is available on both `Bioconductor`
 [https://github.com/campbio/ExperimentSubset](https://github.com/campbio/ExperimentSubset)
 
 # References {-}
+
+<div id="refs"></div>
+
+# Appendix {-}
+## Appendix A {-}
+### R Script to Run Sample Workflow for Performance Comparison {-}
+
+For `SingleCellExperiment`:
+
+```{r, eval = FALSE}
+#Load PBMC4K dataset
+sce1 <- TENxPBMCData(dataset = "pbmc3k")
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- perCellQCMetrics(assay(sce1, "counts"))
+colData(sce1) <- cbind(colData(sce1), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new object:
+sce1 <- sce1[, order(-sce1@colData$sum)]
+sce2 <- sce1[,1:round(ncol(es) * 0.40)]
+
+#Normalize sce2 using scater library and store it back:
+assay(sce2, "filteredCellsNormalized") <- normalizeCounts(assay(sce2, "counts"))
+
+#Find highly variable genes from the normalized assay in the previous step using scran library and make a new object:
+topHVG1000 <- getTopHVGs(modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+sce3 <- sce2[topHVG1000,]
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library:
+reducedDim(sce3, type = "PCA") <- calculatePCA(assay(sce3, "filteredCellsNormalized"))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData
+clusterPC = kmeans(reducedDim(sce3, "PCA"), 5)$cluster
+colData(sce3) <- cbind(colData(sce3), clusterPC)
+```
+
+For `ExperimentSubset`:
+
+```{r, eval = FALSE}
+#################################
+#     Use ExperimentSubset      #
+#################################
+
+#Load PBMC4K dataset and create ExperimentSubset object:
+sce <- TENxPBMCData(dataset = "pbmc3k")
+es <- ExperimentSubset(sce)
+
+#Compute perCellQCMetrics on counts matrix:
+perCellQCMetrics <- perCellQCMetrics(assay(es, "counts"))
+colData(es) <- cbind(colData(es), perCellQCMetrics)
+
+#Filter cells with low column sum and create a new subset called ‘filteredCells’:
+es <- es[, order(-es@colData$sum)]
+es <- createSubset(es, "filteredCells", cols = 1:round(ncol(es) * 0.40), parentAssay = "counts")
+
+#Normalize ‘filteredCells’ subset using scater library and store it back:
+es <- ExperimentSubset::setSubsetAssay(es, "filteredCells", normalizeCounts(assay(es, "filteredCells")), subsetAssayName = "filteredCellsNormalized")
+
+#Find highly variable genes from the normalized assay in the previous step using scran library against the ‘filteredCells’ subset only:
+topHVG1000 <- getTopHVGs(modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+es <- createSubset(es, "hvg1000", rows = topHVG1000, parentAssay = "filteredCellsNormalized")
+
+#Run ‘PCA’ on the highly variable genes computed in the last step using scater library against the ‘filteredCells’ subset only:
+reducedDim(es, type = "PCA", subsetName = "hvg1000") <- calculatePCA(assay(es, "hvg1000"))
+
+#Find clusters from reducedDims of highly variable genes and store the results back into colData of subset
+clusterPC = kmeans(reducedDim(es, "PCA", subsetName = "hvg1000"), 5)$cluster
+colData(es, subsetName = "hvg1000") <- cbind(colData(es, subsetName = "hvg1000"), clusterPC)
+
+#Show the current condition of the ExperimentSubset object:
+subsetSummary(es)
+```
