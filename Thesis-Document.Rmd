@@ -635,11 +635,51 @@ To validate that the data stored and manipulated through the use of our package 
 sce1 <- readRDS("sce1Validation.rds")
 sce2 <- readRDS("sce2Validation.rds")
 sce3 <- readRDS("sce3Validation.rds")
-topHVG1000SCE <- scran::getTopHVGs(scran::modelGeneVar(assay(sce2, "filteredCellsNormalized")), n = 1000)
+x <- scran::modelGeneVar(assay(sce2, "filteredCellsNormalized"))
+topHVG1000SCE <- scran::getTopHVGs(x, n = 1000)
+x <- x[order(-x$bio), ]
+df <- data.frame(mean = x$mean, total = x$total, row.names = rownames(x))
+x <- df$mean
+y <- df$total
+labelsCount <- 10
+hvgList <- topHVG1000SCE[1:10]
+n <- labelsCount
+ggplot2::ggplot() +
+    ggplot2::geom_point(ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_point(ggplot2::aes(x = subset(x, rownames(df) %in% hvgList[seq(n)]),
+                   y = subset(y, rownames(df) %in% hvgList[seq(n)])),
+                   colour = "red") +
+    ggplot2::geom_label(ggplot2::aes(x = subset(x, rownames(df) %in% hvgList[seq(labelsCount)]),
+                   y = subset(y, rownames(df) %in% hvgList[seq(labelsCount)]),
+                   label = subset(rownames(df),
+                                  rownames(df) %in% hvgList[seq(labelsCount)])),
+               colour = "red",
+               size = 2) + ggplot2::labs(x = "Mean", y = "TotalVariance") + ggtitle("Mean vs Variance plot for the highly variable genes using SingleCellExperiment")
+ 
 
 # ExperimentSubset
 es <- readRDS("esValidation.rds")
-topHVG1000ES <- scran::getTopHVGs(scran::modelGeneVar(assay(es, "filteredCellsNormalized")), n = 1000)
+x <- scran::modelGeneVar(assay(es, "filteredCellsNormalized"))
+topHVG1000ES <- scran::getTopHVGs(x, n = 1000)
+x <- x[order(-x$bio), ]
+df <- data.frame(mean = x$mean, total = x$total, row.names = rownames(x))
+x <- df$mean
+y <- df$total
+labelsCount <- 10
+hvgList <- topHVG1000ES[1:10]
+n <- labelsCount
+ggplot2::ggplot() +
+    ggplot2::geom_point(ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_point(ggplot2::aes(x = subset(x, rownames(df) %in% hvgList[seq(n)]),
+                   y = subset(y, rownames(df) %in% hvgList[seq(n)])),
+                   colour = "red") +
+    ggplot2::geom_label(ggplot2::aes(x = subset(x, rownames(df) %in% hvgList[seq(labelsCount)]),
+                   y = subset(y, rownames(df) %in% hvgList[seq(labelsCount)]),
+                   label = subset(rownames(df),
+                                  rownames(df) %in% hvgList[seq(labelsCount)])),
+               colour = "red",
+               size = 2) + ggplot2::labs(x = "Mean", y = "TotalVariance") + ggtitle("Mean vs Variance plot for the highly variable genes using ExperimentSubset")
+
 
 # SingleCellExperiment
 print(sum(assay(sce1, "counts")))
@@ -662,8 +702,17 @@ print(sum(assay(sce3, "filteredCellsNormalized")))
 print(sum(assay(es, "hvg1000")))
 
 # SingleCellExperiment
+x <- reducedDim(sce3, type = "PCA")[, "PC1"]
+y <- reducedDim(sce3, type = "PCA")[, "PC2"]
+ggplot2::ggplot() +
+    ggplot2::geom_point(ggplot2::aes(x = x, y = y)) + ggplot2::labs(x = "PC1", y = "PC2") + ggtitle("PC1 vs PC2 plot using SingleCellExperiment computed on the top 1000 variable genes")
 print(abs(reducedDim(sce3, type = "PCA")[1:4, 1:4]))
+
 # ExperimentSubset
+x <- reducedDim(es, type = "PCA", subsetName = "hvg1000")[, "PC1"]
+y <- reducedDim(es, type = "PCA", subsetName = "hvg1000")[, "PC2"]
+ggplot2::ggplot() +
+    ggplot2::geom_point(ggplot2::aes(x = x, y = y)) + ggplot2::labs(x = "PC1", y = "PC2") + ggtitle("PC1 vs PC2 plot using ExperimentSubset computed on the top 1000 variable genes")
 print(abs(reducedDim(es, type = "PCA", subsetName = "hvg1000")[1:4, 1:4]))
 
 # Printing objects
